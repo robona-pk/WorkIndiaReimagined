@@ -15,6 +15,22 @@
     return (m < 10 ? "0" + m : m) + ":" + (ss < 10 ? "0" + ss : ss);
   }
 
+  function daysSince(iso) {
+    if (!iso) return 0;
+    return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+  }
+
+  function relativeDaysLabel(iso) {
+    var d = daysSince(iso);
+    if (d <= 0) return "Posted today";
+    if (d === 1) return "Posted 1 day ago";
+    return "Posted " + d + " days ago";
+  }
+
+  function hireRatingLabel(r) {
+    return r === "great" ? "Great fit" : r === "ok" ? "Okay so far" : "Not working out";
+  }
+
   // ---------------- Step 1: job search ----------------
   function renderJobSearch() {
     return (
@@ -706,37 +722,19 @@
   }
 
   // ---------------- Billing ----------------
-  // Mirrors the real WorkIndia plans page: a job summary strip, the
-  // Single Hire / Multi Hires toggle, and each tier's actual feature
-  // list — plus a trust section and a clearer post-subscribe state,
-  // which the real page doesn't surface but this one needs to build
-  // confidence right where a recruiter decides whether to pay.
+  // My Jobs (status + hire/feedback), the trust ticker, trial/plan
+  // progress, the Single Hire / Multi Hires plan grid, and a sidebar
+  // (trust reasons, FAQ, talk-to-sales) that build confidence right
+  // where a recruiter decides whether to pay.
   function renderBilling() {
     var st = S.get();
     var reviewed = st.reviewed, calls = st.calledIds.length, shortlisted = st.shortlistedIds.length;
-    var job = st.job || {};
 
     var heroText = st.trialEnded
       ? (st.trialEndReason === "shortlist_target" ? "You found " + D.SHORTLIST_TARGET + " strong candidates." : "Here's what your trial found.")
       : "Your trial is in progress.";
 
-    var hireBlock = "";
-    if (st.subscribed && !st.hireConfirmed) {
-      hireBlock = '<div class="card" style="margin-top:18px;"><p class="section-title">Simulate a hire</p><p class="section-sub">For the prototype: confirm a hire to see the post-hire feedback loop.</p><button class="btn ghost" data-action="confirm-hire">Mark candidate as hired</button></div>';
-    }
-    if (st.hireConfirmed) {
-      hireBlock = '<div class="card" style="margin-top:18px;"><p class="section-title">Hire confirmed</p><p class="section-sub">A rating request has been sent on the <a href="#/updates">Updates</a> feed.</p></div>';
-    }
-
-    var jobStrip = job.title
-      ? ('<div class="job-summary-strip">' +
-          '<span class="jss-item"><b>' + esc(job.title) + '</b></span>' +
-          '<span class="jss-item">&#8377;' + Number(job.salaryMin).toLocaleString("en-IN") + '&ndash;&#8377;' + Number(job.salaryMax).toLocaleString("en-IN") + '</span>' +
-          '<span class="jss-item">' + esc(job.openings) + ' Openings</span>' +
-          '<span class="jss-item">' + D.estimateCandidateCount(job.title, job.city).toLocaleString("en-IN") + ' candidates available</span>' +
-          '<span class="jss-item">Expect 100+ calls/week</span>' +
-        '</div>')
-      : "";
+    var myJobsBlock = renderMyJobs(st);
 
     var plansBlock;
     if (st.subscribed) {
@@ -758,6 +756,7 @@
         '</div>' +
         '<div class="plan-usage-grid">' +
           planUsageStat("Candidates unlocked", shortlisted + (unlocksIncluded ? " / " + unlocksIncluded.toLocaleString("en-IN") : "")) +
+          planUsageStat("Profiles shortlisted", shortlisted) +
           planUsageStat("Profiles reviewed", reviewed) +
           planUsageStat("Calls connected", calls) +
           planUsageStat("Jobs active", subTier ? subTier.jobsActive : 1) +
@@ -791,9 +790,10 @@
       '<div class="side-card">' +
         '<div class="side-card-title">Why employers trust WorkIndia</div>' +
         '<div class="trust-list">' +
+          trustItem("&#9989;", "Verified &amp; active profiles", "Every candidate shown has been screened and confirmed available &mdash; not stale leads.") +
+          trustItem("&#8377;", "No commission, ever", "One flat fee whatever the salary.") +
           trustItem("&#128274;", "Number stays private", "Calls run through the platform, never your personal number.") +
           trustItem("&#127911;", "Every call recorded", "Play back any screening call, any time.") +
-          trustItem("&#8377;", "No commission, ever", "One flat fee whatever the salary.") +
           trustItem("&#10060;", "Cancel anytime", "No lock-in beyond the plan you pick.") +
         '</div>' +
       '</div>' +
@@ -824,17 +824,85 @@
 
     return (
       '<div>' +
-        jobStrip +
+        myJobsBlock +
         tickerBlock +
         evidenceBlock +
         '<div class="billing-layout">' +
           plansBlock +
           sidebar +
         '</div>' +
-        hireBlock +
         (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
     );
+  }
+
+  // One job row (this prototype only tracks one job at a time) with its
+  // status, expandable requirement details, and the hire -> 3-month
+  // feedback-gate flow folded in rather than living as a separate card.
+  function renderMyJobs(st) {
+    var job = st.job;
+    if (!job) return "";
+    var spec = st.draftJob || {};
+    var isOpen = !st.hireConfirmed;
+    var expanded = !!st.jobDetailsOpen;
+
+    var statusBadge = isOpen
+      ? '<span class="job-status-badge open">&#9679; Open</span>'
+      : '<span class="job-status-badge closed">&#9679; Closed &middot; Hired</span>';
+
+    var detailBlock = expanded
+      ? ('<div class="job-detail-grid">' +
+          jobDetailCell("Experience", spec.experience || "Not specified") +
+          jobDetailCell("Education", spec.education || "Not specified") +
+          jobDetailCell("Gender", spec.gender || "Any") +
+          jobDetailCell("English", spec.english || "Not required") +
+          jobDetailCell("Area", job.area || "&mdash;") +
+          jobDetailCell("City", job.city || "&mdash;") +
+        '</div>')
+      : "";
+
+    var actionsBlock;
+    if (isOpen) {
+      actionsBlock = '<button class="btn ghost" data-action="confirm-hire">Mark as hired</button>';
+    } else if (st.hireRating) {
+      actionsBlock = '<div class="job-feedback-done">&#10003; Feedback recorded for ' + esc(st.hiredCandidateName || "this hire") + ': <b>' + hireRatingLabel(st.hireRating) + '</b></div>';
+    } else {
+      var waited = daysSince(st.hiredAt);
+      var delay = D.HIRE_FEEDBACK_DELAY_DAYS;
+      if (waited >= delay) {
+        actionsBlock = '<div class="job-feedback-cta">' +
+          '<p class="section-sub" style="margin-bottom:8px;">' + esc(st.hiredCandidateName || "Your hire") + ' has been onboard ' + delay + '+ days &mdash; how&rsquo;s it going?</p>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+            '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="great">&#11088; Great fit</button>' +
+            '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="ok">&#11088; Okay so far</button>' +
+            '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="bad">&#11088; Not working out</button>' +
+          '</div>' +
+        '</div>';
+      } else {
+        actionsBlock = '<div class="job-feedback-wait"><b>' + esc(st.hiredCandidateName || "Candidate") + '</b> was hired for this role. We check in ' + delay + ' days after a hire &mdash; ' + (delay - waited) + ' to go.</div>';
+      }
+    }
+
+    return (
+      '<div class="card my-jobs-card">' +
+        '<p class="section-title" style="margin-bottom:12px;">My Jobs</p>' +
+        '<div class="job-row' + (expanded ? ' expanded' : '') + '" data-action="toggle-job-details">' +
+          '<div class="job-row-main">' +
+            statusBadge +
+            '<div class="job-row-title">' + esc(job.title) + '</div>' +
+            '<div class="job-row-sub">' + esc(job.area || job.city || "") + ' &middot; &#8377;' + Number(job.salaryMin).toLocaleString("en-IN") + '&ndash;&#8377;' + Number(job.salaryMax).toLocaleString("en-IN") + ' &middot; ' + esc(job.openings) + ' openings &middot; ' + relativeDaysLabel(st.jobPostedAt) +
+            '</div>' +
+          '</div>' +
+          '<span class="job-row-chevron">' + (expanded ? "&#9650;" : "&#9660;") + '</span>' +
+        '</div>' +
+        detailBlock +
+        '<div class="job-actions">' + actionsBlock + '</div>' +
+      '</div>'
+    );
+  }
+
+  function jobDetailCell(label, value) {
+    return '<div class="job-detail-cell"><div class="job-detail-l">' + label + '</div><div class="job-detail-v">' + esc(value) + '</div></div>';
   }
 
   function pad2(n) { n = String(n); return n.length < 2 ? "0" + n : n; }
@@ -891,11 +959,15 @@
 
     var ratingBlock = "";
     if (st.hireConfirmed && !st.hireRating) {
-      ratingBlock = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">' +
-        '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="great">&#11088; Great fit</button>' +
-        '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="ok">&#11088; Okay so far</button>' +
-        '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="bad">&#11088; Not working out</button>' +
-      '</div>';
+      if (daysSince(st.hiredAt) >= D.HIRE_FEEDBACK_DELAY_DAYS) {
+        ratingBlock = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">' +
+          '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="great">&#11088; Great fit</button>' +
+          '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="ok">&#11088; Okay so far</button>' +
+          '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="bad">&#11088; Not working out</button>' +
+        '</div>';
+      } else {
+        ratingBlock = '<div class="wa-bubble">We check in ' + D.HIRE_FEEDBACK_DELAY_DAYS + ' days after a hire &mdash; ' + (D.HIRE_FEEDBACK_DELAY_DAYS - daysSince(st.hiredAt)) + ' to go.</div>';
+      }
     }
     if (st.hireRating) {
       ratingBlock = '<div class="wa-bubble" style="color:#15803D;">Thanks for the rating &mdash; this feeds straight into matching for your next hire.</div>';

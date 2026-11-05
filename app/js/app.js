@@ -399,6 +399,10 @@
         S.requestSalesHelp();
         render();
         break;
+      case "toggle-job-details":
+        S.toggleJobDetails();
+        render();
+        break;
     }
   }
 

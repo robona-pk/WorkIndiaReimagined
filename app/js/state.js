@@ -35,6 +35,8 @@
       subscribed: false,
       hireConfirmed: false,
       hireRating: null,
+      hiredAt: null,             // ISO timestamp set the moment a hire is confirmed — feedback is only asked for after HIRE_FEEDBACK_DELAY_DAYS
+      jobDetailsOpen: false,     // My Jobs card: whether the job row is expanded
       updatesFeed: [],           // WhatsApp-style message log
       callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
       profileOpenFor: null,      // candidateId whose profile overlay is open, or null
@@ -303,12 +305,18 @@
     confirmHire: function (candidateName) {
       state.hireConfirmed = true;
       state.hiredCandidateName = candidateName;
+      state.hiredAt = new Date().toISOString();
       pushUpdate("Looks like " + candidateName + " joined — congrats on the hire! How has it gone so far?");
       save(state);
     },
 
     rateHire: function (rating) {
       state.hireRating = rating;
+      save(state);
+    },
+
+    toggleJobDetails: function () {
+      state.jobDetailsOpen = !state.jobDetailsOpen;
       save(state);
     },
 

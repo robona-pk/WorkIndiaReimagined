@@ -376,6 +376,7 @@
     TOTAL_ALLOCATION: 30,
     SHORTLIST_TARGET: 5,
     TRIAL_DAY_CAP: 7,
+    HIRE_FEEDBACK_DELAY_DAYS: 90, // how long after a hire we wait before asking for feedback
     PLANS: PLANS,
     ROLE_SUGGESTIONS: ROLE_SUGGESTIONS,
     CITY_SUGGESTIONS: CITY_SUGGESTIONS,
