@@ -45,32 +45,35 @@
     var st = S.get();
     var count = D.estimateCandidateCount(st.searchRole, st.searchCity);
     return (
-      '<div class="onb-wrap flow-step split-step" data-count-target="' + count + '" style="max-width:860px;">' +
+      '<div class="onb-wrap flow-step split-step" data-count-target="' + count + '">' +
         '<div class="flow-progress">Step 2 of 3 &middot; Candidates &amp; login</div>' +
         '<div class="split-grid">' +
 
           '<div class="split-col">' +
-            '<div class="count-hero" style="text-align:left;margin:0 0 16px;">' +
-              '<div class="count-num" id="countNum" style="font-size:36px;">0</div>' +
-              '<p class="count-label">candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b></p>' +
-            '</div>' +
-            '<div class="card reveal-after-count" id="pricingReveal" style="opacity:0;">' +
-              '<div class="price-hero" style="margin:0 0 16px;text-align:left;">' +
-                '<div class="price-rupee" style="font-size:38px;">&#8377;' + D.PLANS.trialDueToday + '</div>' +
-                '<p class="price-label">to start hiring today</p>' +
+            '<div class="card split-card">' +
+              '<div class="count-hero">' +
+                '<div class="count-num" id="countNum">0</div>' +
+                '<p class="count-label">candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b></p>' +
               '</div>' +
-              '<ul class="land-list" style="margin-bottom:14px;">' +
-                '<li>AI calls and screens candidates by voice before you see them</li>' +
-                '<li>Review up to 30 verified profiles &mdash; call via platform, your number stays private</li>' +
-              '</ul>' +
-              '<div class="flat-fee-note">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
+              '<div class="split-divider"></div>' +
+              '<div class="reveal-after-count" id="pricingReveal" style="opacity:0;">' +
+                '<div class="price-hero">' +
+                  '<div class="price-rupee">&#8377;' + D.PLANS.trialDueToday + '</div>' +
+                  '<p class="price-label">to start hiring today</p>' +
+                '</div>' +
+                '<ul class="land-list">' +
+                  '<li>AI calls and screens candidates by voice before you see them</li>' +
+                  '<li>Review up to 30 verified profiles &mdash; call via platform, your number stays private</li>' +
+                '</ul>' +
+                '<div class="flat-fee-note">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
+              '</div>' +
             '</div>' +
           '</div>' +
 
           '<div class="split-col">' +
-            '<div class="card" style="height:100%;">' +
-              '<p class="section-title" style="margin-bottom:4px;">Verify your number</p>' +
-              '<p class="section-sub" style="margin-bottom:16px;">No email signup, no password &mdash; just OTP.</p>' +
+            '<div class="card split-card">' +
+              '<p class="section-title">Verify your number</p>' +
+              '<p class="section-sub">No email signup, no password &mdash; just OTP.</p>' +
               '<form id="loginForm">' +
                 '<div class="field"><label>Mobile number</label><input name="phone" type="tel" placeholder="98765 43210" value="9353248620" maxlength="10" required></div>' +
                 '<div class="field"><label>OTP</label><input name="otp" type="text" placeholder="Auto-filled for this demo" value="1234" required></div>' +
