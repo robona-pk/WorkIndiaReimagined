@@ -2,168 +2,168 @@
   "cand-1": {
     "lang": "hi",
     "file": "audio/cand-1.mp3",
-    "duration": 27.44,
+    "duration": 34.71,
     "lines": [
       {
         "who": "ai",
         "t": "नमस्ते, मैं वर्क इंडिया से बोल रहा हूँ। क्या आप डिलीवरी एग्जीक्यूटिव की नौकरी के लिए उपलब्ध हैं?",
         "t_en": "Hi, this is WorkIndia calling. Are you available for the Delivery Executive job?",
         "start": 0.0,
-        "end": 7.64
+        "end": 9.75
       },
       {
         "who": "candidate",
         "t": "हाँ जी, मैं उपलब्ध हूँ।",
         "t_en": "Yes, I'm available.",
-        "start": 8.09,
-        "end": 10.1
+        "start": 10.15,
+        "end": 12.82
       },
       {
         "who": "ai",
         "t": "आप कब से शुरू कर सकते हैं?",
         "t_en": "When can you start?",
-        "start": 10.55,
-        "end": 13.08
+        "start": 13.37,
+        "end": 16.71
       },
       {
         "who": "candidate",
         "t": "मैं कल से शुरू कर सकता हूँ।",
         "t_en": "I can start from tomorrow.",
-        "start": 13.53,
-        "end": 15.85
+        "start": 17.11,
+        "end": 20.31
       },
       {
         "who": "ai",
         "t": "आपकी सैलरी की उम्मीद क्या है?",
         "t_en": "What's your salary expectation?",
-        "start": 16.3,
-        "end": 19.09
+        "start": 20.86,
+        "end": 24.4
       },
       {
         "who": "candidate",
         "t": "सोलह हज़ार से अठारह हज़ार रुपये महीना।",
         "t_en": "Sixteen to eighteen thousand rupees a month.",
-        "start": 19.54,
-        "end": 22.64
+        "start": 24.81,
+        "end": 28.96
       },
       {
         "who": "ai",
         "t": "धन्यवाद, मैं यह जानकारी एम्प्लॉयर को भेज दूंगा।",
         "t_en": "Thank you, I'll pass this on to the employer.",
-        "start": 23.1,
-        "end": 27.0
+        "start": 29.51,
+        "end": 34.31
       }
     ]
   },
   "cand-2": {
     "lang": "kn",
     "file": "audio/cand-2.mp3",
-    "duration": 32.46,
+    "duration": 37.37,
     "lines": [
       {
         "who": "ai",
         "t": "ನಮಸ್ಕಾರ, ನಾನು ವರ್ಕ್ ಇಂಡಿಯಾದಿಂದ ಕರೆ ಮಾಡುತ್ತಿದ್ದೇನೆ. ನೀವು ರಿಟೇಲ್ ಅಸೋಸಿಯೇಟ್ ಹುದ್ದೆಗೆ ಲಭ್ಯವಿದ್ದೀರಾ?",
         "t_en": "Hello, this is WorkIndia calling. Are you available for the Retail Associate role?",
         "start": 0.0,
-        "end": 8.59
+        "end": 10.06
       },
       {
         "who": "candidate",
         "t": "ಹೌದು, ನಾನು ಲಭ್ಯವಿದ್ದೇನೆ.",
         "t_en": "Yes, I'm available.",
-        "start": 9.04,
-        "end": 11.52
+        "start": 10.46,
+        "end": 13.38
       },
       {
         "who": "ai",
         "t": "ನೀವು ಯಾವಾಗ ಕೆಲಸ ಪ್ರಾರಂಭಿಸಬಹುದು?",
         "t_en": "When can you start?",
-        "start": 11.97,
-        "end": 15.5
+        "start": 13.93,
+        "end": 18.03
       },
       {
         "who": "candidate",
         "t": "ನಾನು ಸೋಮವಾರದಿಂದ ಪ್ರಾರಂಭಿಸಬಹುದು.",
         "t_en": "I can start from Monday.",
-        "start": 15.95,
-        "end": 19.16
+        "start": 18.43,
+        "end": 22.06
       },
       {
         "who": "ai",
         "t": "ನಿಮ್ಮ ಸಂಬಳದ ನಿರೀಕ್ಷೆ ಏನು?",
         "t_en": "What's your salary expectation?",
-        "start": 19.61,
-        "end": 22.22
+        "start": 22.61,
+        "end": 25.73
       },
       {
         "who": "candidate",
         "t": "ಹದಿನೈದು ಸಾವಿರದಿಂದ ಹದಿನೆಂಟು ಸಾವಿರ ರೂಪಾಯಿ.",
         "t_en": "Fifteen to eighteen thousand rupees.",
-        "start": 22.67,
-        "end": 26.51
+        "start": 26.13,
+        "end": 30.64
       },
       {
         "who": "ai",
         "t": "ಧನ್ಯವಾದಗಳು, ನಾನು ಇದನ್ನು ಉದ್ಯೋಗದಾತರಿಗೆ ತಿಳಿಸುತ್ತೇನೆ.",
         "t_en": "Thank you, I'll let the employer know.",
-        "start": 26.95,
-        "end": 32.01
+        "start": 31.19,
+        "end": 36.96
       }
     ]
   },
   "cand-3": {
     "lang": "en",
     "file": "audio/cand-3.mp3",
-    "duration": 24.41,
+    "duration": 21.84,
     "lines": [
       {
         "who": "ai",
         "t": "Hi, this is WorkIndia calling on behalf of an employer hiring for a Security Guard role. Are you available?",
         "t_en": "Hi, this is WorkIndia calling on behalf of an employer hiring for a Security Guard role. Are you available?",
         "start": 0.0,
-        "end": 6.97
+        "end": 6.54
       },
       {
         "who": "candidate",
         "t": "Yes sir, I am available.",
         "t_en": "Yes sir, I am available.",
-        "start": 7.42,
-        "end": 9.32
+        "start": 6.94,
+        "end": 8.57
       },
       {
         "who": "ai",
         "t": "When can you start?",
         "t_en": "When can you start?",
-        "start": 9.77,
-        "end": 11.21
+        "start": 9.13,
+        "end": 10.09
       },
       {
         "who": "candidate",
         "t": "I can start from tomorrow.",
         "t_en": "I can start from tomorrow.",
-        "start": 11.66,
-        "end": 13.46
+        "start": 10.49,
+        "end": 11.77
       },
       {
         "who": "ai",
         "t": "What salary are you expecting?",
         "t_en": "What salary are you expecting?",
-        "start": 13.91,
-        "end": 15.98
+        "start": 12.32,
+        "end": 14.1
       },
       {
         "who": "candidate",
         "t": "Around fourteen to seventeen thousand rupees per month.",
         "t_en": "Around fourteen to seventeen thousand rupees per month.",
-        "start": 16.43,
-        "end": 19.8
+        "start": 14.49,
+        "end": 17.63
       },
       {
         "who": "ai",
         "t": "Great, thank you. I'll pass this on to the employer.",
         "t_en": "Great, thank you. I'll pass this on to the employer.",
-        "start": 20.25,
-        "end": 23.96
+        "start": 18.18,
+        "end": 21.44
       }
     ]
   }
