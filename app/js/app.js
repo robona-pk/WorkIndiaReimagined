@@ -249,10 +249,6 @@
         var panel = document.getElementById("transcript-" + id);
         if (panel) panel.style.display = panel.style.display === "none" ? "block" : "none";
         break;
-      case "goto-login":
-        S.setFlowStep("login");
-        render();
-        break;
       case "start-trial":
         S.startTrial(window.__draftCompany || "Your Company");
         location.hash = "#/dashboard";

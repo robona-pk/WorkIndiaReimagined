@@ -19,7 +19,7 @@
   function renderJobSearch() {
     return (
       '<div class="onb-wrap flow-step">' +
-        '<div class="flow-progress">Step 1 of 4 &middot; Find your candidates</div>' +
+        '<div class="flow-progress">Step 1 of 3 &middot; Find your candidates</div>' +
         '<div class="onb-logo">W</div>' +
         '<h1 class="onb-title">Who are you hiring?</h1>' +
         '<p class="onb-sub">Tell us the role and the city &mdash; we\'ll show you how many candidates are available before you commit to anything.</p>' +
@@ -36,49 +36,50 @@
     );
   }
 
-  // ---------------- Step 2: candidate count + pricing, one screen ----------------
-  // A short count-up loader, then the ₹1 pricing hook reveals in place —
-  // no separate "Continue" screen. app.js drives the count-up animation
-  // and the reveal timing; this just renders the two states' markup.
+  // ---------------- Step 2: candidate count + trial (left) & login (right), one screen ----------------
+  // A short count-up loader reveals the trial/pricing card in place on the
+  // left; the login form sits on the right from the start — one screen,
+  // one action (verify & continue), instead of count → pricing → login as
+  // three separate clicks.
   function renderCandidateCount() {
     var st = S.get();
     var count = D.estimateCandidateCount(st.searchRole, st.searchCity);
     return (
-      '<div class="onb-wrap flow-step" data-count-target="' + count + '">' +
-        '<div class="flow-progress">Step 2 of 4 &middot; Candidates available</div>' +
-        '<div class="count-hero">' +
-          '<div class="count-num" id="countNum">0</div>' +
-          '<p class="count-label">candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b></p>' +
-        '</div>' +
-        '<div class="card reveal-after-count" id="pricingReveal" style="opacity:0;">' +
-          '<div class="price-hero" style="margin:-4px 0 18px;">' +
-            '<div class="price-rupee">&#8377;' + D.PLANS.trialDueToday + '</div>' +
-            '<p class="price-label">to start hiring today</p>' +
-          '</div>' +
-          '<ul class="land-list" style="margin-bottom:16px;">' +
-            '<li>AI calls and screens candidates by voice before you see them</li>' +
-            '<li>Review up to 30 verified profiles &mdash; call via platform, your number stays private</li>' +
-          '</ul>' +
-          '<div class="flat-fee-note" style="margin-bottom:16px;">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
-          '<button class="btn primary full" data-action="goto-login">Start Hiring @ &#8377;' + D.PLANS.trialDueToday + ' &rarr;</button>' +
-        '</div>' +
-      '</div>'
-    );
-  }
+      '<div class="onb-wrap flow-step split-step" data-count-target="' + count + '" style="max-width:860px;">' +
+        '<div class="flow-progress">Step 2 of 3 &middot; Candidates &amp; login</div>' +
+        '<div class="split-grid">' +
 
-  // ---------------- Step 3: login ----------------
-  function renderLoginStep() {
-    return (
-      '<div class="onb-wrap flow-step">' +
-        '<div class="flow-progress">Step 3 of 4 &middot; Verify your number</div>' +
-        '<div class="onb-logo">W</div>' +
-        '<h1 class="onb-title">Verify your mobile number</h1>' +
-        '<p class="onb-sub">We\'ll use this to send candidate updates &mdash; no email signup, no password.</p>' +
-        '<form id="loginForm" class="card">' +
-          '<div class="field"><label>Mobile number</label><input name="phone" type="tel" placeholder="98765 43210" value="9353248620" maxlength="10" required></div>' +
-          '<div class="field"><label>OTP</label><input name="otp" type="text" placeholder="Auto-filled for this demo" value="1234" required></div>' +
-          '<button type="submit" class="btn primary full">Verify &amp; continue</button>' +
-        '</form>' +
+          '<div class="split-col">' +
+            '<div class="count-hero" style="text-align:left;margin:0 0 16px;">' +
+              '<div class="count-num" id="countNum" style="font-size:36px;">0</div>' +
+              '<p class="count-label">candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b></p>' +
+            '</div>' +
+            '<div class="card reveal-after-count" id="pricingReveal" style="opacity:0;">' +
+              '<div class="price-hero" style="margin:0 0 16px;text-align:left;">' +
+                '<div class="price-rupee" style="font-size:38px;">&#8377;' + D.PLANS.trialDueToday + '</div>' +
+                '<p class="price-label">to start hiring today</p>' +
+              '</div>' +
+              '<ul class="land-list" style="margin-bottom:14px;">' +
+                '<li>AI calls and screens candidates by voice before you see them</li>' +
+                '<li>Review up to 30 verified profiles &mdash; call via platform, your number stays private</li>' +
+              '</ul>' +
+              '<div class="flat-fee-note">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="split-col">' +
+            '<div class="card" style="height:100%;">' +
+              '<p class="section-title" style="margin-bottom:4px;">Verify your number</p>' +
+              '<p class="section-sub" style="margin-bottom:16px;">No email signup, no password &mdash; just OTP.</p>' +
+              '<form id="loginForm">' +
+                '<div class="field"><label>Mobile number</label><input name="phone" type="tel" placeholder="98765 43210" value="9353248620" maxlength="10" required></div>' +
+                '<div class="field"><label>OTP</label><input name="otp" type="text" placeholder="Auto-filled for this demo" value="1234" required></div>' +
+                '<button type="submit" class="btn primary full">Verify &amp; start hiring @ &#8377;' + D.PLANS.trialDueToday + ' &rarr;</button>' +
+              '</form>' +
+            '</div>' +
+          '</div>' +
+
+        '</div>' +
       '</div>'
     );
   }
@@ -563,7 +564,6 @@
   global.WI_VIEWS = {
     search: renderJobSearch,
     count: renderCandidateCount,
-    login: renderLoginStep,
     posting: renderJobPostingAI,
     matching: renderMatchingLoader,
     hotleads: renderHotLeadsStep,

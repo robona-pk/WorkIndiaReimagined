@@ -11,7 +11,7 @@
   function defaultState() {
     return {
       onboarded: false,
-      flowStep: "search",        // "search" | "count" | "login" | "posting" | "matching" | "hotleads"
+      flowStep: "search",        // "search" | "count" (candidates+trial+login) | "posting" | "matching" | "hotleads"
       searchRole: null,
       searchCity: null,
       draftJob: null,            // AI-suggested job spec, built on the posting step
