@@ -422,6 +422,14 @@
     SHORTLIST_TARGET: 5,
     TRIAL_DAY_CAP: 7,
     HIRE_FEEDBACK_DELAY_DAYS: 90, // how long after a hire we wait before asking for feedback
+    HIRE_BAD_REASONS: [
+      "Skill mismatch",
+      "Attendance issues",
+      "Attitude or behaviour",
+      "Left the job early",
+      "Pay expectations mismatch",
+      "Poor communication"
+    ],
     PLANS: PLANS,
     ROLE_SUGGESTIONS: ROLE_SUGGESTIONS,
     CITY_SUGGESTIONS: CITY_SUGGESTIONS,

@@ -412,6 +412,22 @@
         S.rateMockJob(el.getAttribute("data-job-id"), el.getAttribute("data-rating"));
         render();
         break;
+      case "toggle-hire-bad-tag":
+        S.toggleHireBadTag(el.getAttribute("data-tag"));
+        render();
+        break;
+      case "submit-hire-bad-feedback":
+        S.submitHireBadFeedback();
+        render();
+        break;
+      case "toggle-mock-bad-tag":
+        S.toggleMockJobBadTag(el.getAttribute("data-job-id"), el.getAttribute("data-tag"));
+        render();
+        break;
+      case "submit-mock-bad-feedback":
+        S.submitMockJobBadFeedback(el.getAttribute("data-job-id"));
+        render();
+        break;
     }
   }
 

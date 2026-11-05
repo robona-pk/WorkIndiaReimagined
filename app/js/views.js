@@ -31,6 +31,34 @@
     return r === "great" ? "Great fit" : r === "ok" ? "Okay so far" : "Not working out";
   }
 
+  // Shown once "Not working out" is picked, before the rating is final —
+  // we want the reason, not just the verdict, so the next match can
+  // actually avoid it. toggleAction/submitAction are data-action names;
+  // jobId is null for the single current-job flow, or a past-job id.
+  function renderBadReasonPicker(selectedTags, toggleAction, submitAction, jobId) {
+    selectedTags = selectedTags || [];
+    var jobAttr = jobId ? ' data-job-id="' + jobId + '"' : '';
+    var chips = (D.HIRE_BAD_REASONS || []).map(function (tag) {
+      var active = selectedTags.indexOf(tag) !== -1;
+      return '<button type="button" class="reason-tag' + (active ? ' selected' : '') + '" data-action="' + toggleAction + '"' + jobAttr + ' data-tag="' + esc(tag) + '">' + (active ? '&#10003; ' : '') + esc(tag) + '</button>';
+    }).join("");
+    return (
+      '<div class="job-feedback-cta">' +
+        '<p class="section-sub" style="margin-bottom:8px;">Sorry to hear that. What went wrong? Select all that apply.</p>' +
+        '<div class="reason-tag-grid">' + chips + '</div>' +
+        '<button class="btn ghost" style="margin-top:10px;padding:7px 14px;font-size:11.5px;" data-action="' + submitAction + '"' + jobAttr + '>Submit feedback</button>' +
+      '</div>'
+    );
+  }
+
+  // Appended under a finalized "bad" rating's done-state, showing which
+  // reason tags were submitted (nothing rendered for great/ok or if no
+  // reasons were picked).
+  function renderBadReasonsLine(rating, reasons) {
+    if (rating !== "bad" || !reasons || !reasons.length) return "";
+    return '<div class="job-feedback-reasons">' + reasons.map(function (t) { return '<span class="reason-tag-chip">' + esc(t) + '</span>'; }).join("") + '</div>';
+  }
+
   // ---------------- Step 1: job search ----------------
   function renderJobSearch() {
     return (
@@ -874,7 +902,9 @@
 
     var actionsBlock;
     if (rating) {
-      actionsBlock = '<div class="job-feedback-done">&#10003; Feedback recorded for ' + esc(pj.candidateName) + ': <b>' + hireRatingLabel(rating) + '</b></div>';
+      actionsBlock = '<div class="job-feedback-done">&#10003; Feedback recorded for ' + esc(pj.candidateName) + ': <b>' + hireRatingLabel(rating) + '</b></div>' + renderBadReasonsLine(rating, st.mockJobBadReasons[pj.id]);
+    } else if (st.mockJobBadPending[pj.id]) {
+      actionsBlock = renderBadReasonPicker(st.mockJobBadTags[pj.id], "toggle-mock-bad-tag", "submit-mock-bad-feedback", pj.id);
     } else if (waited >= delay) {
       actionsBlock = '<div class="job-feedback-cta">' +
         '<p class="section-sub" style="margin-bottom:8px;">' + esc(pj.candidateName) + ' has been onboard ' + delay + '+ days &mdash; was the hire a good fit?</p>' +
@@ -936,7 +966,9 @@
     if (isOpen) {
       actionsBlock = '<button class="btn ghost" data-action="confirm-hire">Mark as hired</button>';
     } else if (st.hireRating) {
-      actionsBlock = '<div class="job-feedback-done">&#10003; Feedback recorded for ' + esc(st.hiredCandidateName || "this hire") + ': <b>' + hireRatingLabel(st.hireRating) + '</b></div>';
+      actionsBlock = '<div class="job-feedback-done">&#10003; Feedback recorded for ' + esc(st.hiredCandidateName || "this hire") + ': <b>' + hireRatingLabel(st.hireRating) + '</b></div>' + renderBadReasonsLine(st.hireRating, st.hireBadReasons);
+    } else if (st.hireBadPending) {
+      actionsBlock = renderBadReasonPicker(st.hireBadTags, "toggle-hire-bad-tag", "submit-hire-bad-feedback", null);
     } else {
       var waited = daysSince(st.hiredAt);
       var delay = D.HIRE_FEEDBACK_DELAY_DAYS;
@@ -1029,7 +1061,9 @@
     }).join("");
 
     var ratingBlock = "";
-    if (st.hireConfirmed && !st.hireRating) {
+    if (st.hireBadPending) {
+      ratingBlock = renderBadReasonPicker(st.hireBadTags, "toggle-hire-bad-tag", "submit-hire-bad-feedback", null);
+    } else if (st.hireConfirmed && !st.hireRating) {
       if (daysSince(st.hiredAt) >= D.HIRE_FEEDBACK_DELAY_DAYS) {
         ratingBlock = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">' +
           '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-hire" data-rating="great">&#11088; Great fit</button>' +

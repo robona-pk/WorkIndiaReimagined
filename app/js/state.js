@@ -35,10 +35,16 @@
       subscribed: false,
       hireConfirmed: false,
       hireRating: null,
+      hireBadPending: false,     // true once "Not working out" is picked but reason tags haven't been submitted yet
+      hireBadTags: [],           // reason tags currently toggled, for the pending "bad" rating
+      hireBadReasons: null,      // the submitted reason tags, once feedback is finalized
       hiredAt: null,             // ISO timestamp set the moment a hire is confirmed — feedback is only asked for after HIRE_FEEDBACK_DELAY_DAYS
       jobDetailsOpen: false,     // My Jobs card: whether the job row is expanded
       expandedPastJobId: null,   // My Jobs page: which closed-job row (from MOCK_PAST_JOBS) is expanded
       mockJobRatings: {},        // past-job id -> rating, once the feedback nudge is answered (overrides the seed data's default rating)
+      mockJobBadPending: {},     // past-job id -> true while its "Not working out" reason tags are being picked
+      mockJobBadTags: {},        // past-job id -> reason tags currently toggled
+      mockJobBadReasons: {},     // past-job id -> submitted reason tags, once finalized
       updatesFeed: [],           // WhatsApp-style message log
       callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
       profileOpenFor: null,      // candidateId whose profile overlay is open, or null
@@ -312,8 +318,28 @@
       save(state);
     },
 
+    // "great"/"ok" finalize immediately. "bad" opens the reason-tag picker
+    // instead — we want to know why before closing out the feedback loop.
     rateHire: function (rating) {
-      state.hireRating = rating;
+      if (rating === "bad") {
+        state.hireBadPending = true;
+        state.hireBadTags = [];
+      } else {
+        state.hireRating = rating;
+      }
+      save(state);
+    },
+
+    toggleHireBadTag: function (tag) {
+      var i = state.hireBadTags.indexOf(tag);
+      if (i === -1) state.hireBadTags.push(tag); else state.hireBadTags.splice(i, 1);
+      save(state);
+    },
+
+    submitHireBadFeedback: function () {
+      state.hireRating = "bad";
+      state.hireBadReasons = state.hireBadTags.slice();
+      state.hireBadPending = false;
       save(state);
     },
 
@@ -328,7 +354,26 @@
     },
 
     rateMockJob: function (jobId, rating) {
-      state.mockJobRatings[jobId] = rating;
+      if (rating === "bad") {
+        state.mockJobBadPending[jobId] = true;
+        state.mockJobBadTags[jobId] = [];
+      } else {
+        state.mockJobRatings[jobId] = rating;
+      }
+      save(state);
+    },
+
+    toggleMockJobBadTag: function (jobId, tag) {
+      var tags = state.mockJobBadTags[jobId] || (state.mockJobBadTags[jobId] = []);
+      var i = tags.indexOf(tag);
+      if (i === -1) tags.push(tag); else tags.splice(i, 1);
+      save(state);
+    },
+
+    submitMockJobBadFeedback: function (jobId) {
+      state.mockJobRatings[jobId] = "bad";
+      state.mockJobBadReasons[jobId] = (state.mockJobBadTags[jobId] || []).slice();
+      state.mockJobBadPending[jobId] = false;
       save(state);
     },
 
