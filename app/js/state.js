@@ -39,7 +39,10 @@
       callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
       profileOpenFor: null,      // candidateId whose profile overlay is open, or null
       liveCallRecordings: {},    // candidateId -> true once the recruiter's own mic audio was captured for that call
-      micPermissionDenied: false // true once the browser mic prompt has been denied/unsupported, so we stop re-asking
+      micPermissionDenied: false, // true once the browser mic prompt has been denied/unsupported, so we stop re-asking
+      billingTab: "single",      // "single" | "multi" — which pricing tab is showing on Trial & Billing
+      subscribedTierId: null,    // e.g. "1m" | "3m" | "12m" — which plan tier they subscribed to
+      subscribedGroup: null      // "single" | "multi" — which tab that tier was chosen from
     };
   }
 
@@ -180,6 +183,11 @@
       save(state);
     },
 
+    setBillingTab: function (tab) {
+      state.billingTab = (tab === "multi") ? "multi" : "single";
+      save(state);
+    },
+
     openCandidateProfile: function (candidateId) {
       state.profileOpenFor = candidateId;
       save(state);
@@ -221,8 +229,10 @@
       save(state);
     },
 
-    subscribe: function () {
+    subscribe: function (tierId, group) {
       state.subscribed = true;
+      if (tierId) state.subscribedTierId = tierId;
+      if (group) state.subscribedGroup = (group === "multi") ? "multi" : "single";
       save(state);
     },
 

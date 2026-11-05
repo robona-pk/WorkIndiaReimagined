@@ -251,7 +251,7 @@
     });
   }
 
-  function handleAction(action, id) {
+  function handleAction(action, id, el) {
     switch (action) {
       case "mark-relevant":
         S.markRelevant(id);
@@ -353,8 +353,13 @@
         render();
         break;
       case "subscribe-tier":
-        S.subscribe();
+        var tierGroup = (el && el.getAttribute("data-group")) || "single";
+        S.subscribe(id, tierGroup);
         S.closePaywall();
+        render();
+        break;
+      case "set-billing-tab":
+        S.setBillingTab(id);
         render();
         break;
     }

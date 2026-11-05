@@ -387,7 +387,7 @@
                 '<div class="paywall-name">' + t.name + '</div>' +
                 '<div class="paywall-price">&#8377;' + t.perMonth.toLocaleString("en-IN") + '<span>/month</span></div>' +
                 '<div class="paywall-upfront">Pay upfront: &#8377;' + t.payUpfront.toLocaleString("en-IN") + '</div>' +
-                '<button class="btn ' + (t.popular ? "primary" : "ghost") + ' full" data-action="subscribe-tier" data-id="' + t.id + '" style="margin:10px 0 12px;">Start immediately</button>' +
+                '<button class="btn ' + (t.popular ? "primary" : "ghost") + ' full" data-action="subscribe-tier" data-id="' + t.id + '" data-group="single" style="margin:10px 0 12px;">Start immediately</button>' +
                 '<ul class="paywall-feats">' +
                   '<li>Unlock ' + t.unlocks + ' candidate profiles</li>' +
                   '<li>Boost job up to ' + t.boosts + ' times</li>' +
@@ -585,9 +585,15 @@
   }
 
   // ---------------- Billing ----------------
+  // Mirrors the real WorkIndia plans page: a job summary strip, the
+  // Single Hire / Multi Hires toggle, and each tier's actual feature
+  // list — plus a trust section and a clearer post-subscribe state,
+  // which the real page doesn't surface but this one needs to build
+  // confidence right where a recruiter decides whether to pay.
   function renderBilling() {
     var st = S.get();
     var reviewed = st.reviewed, calls = st.calledIds.length, shortlisted = st.shortlistedIds.length;
+    var job = st.job || {};
 
     var heroText = st.trialEnded
       ? (st.trialEndReason === "shortlist_target" ? "You found " + D.SHORTLIST_TARGET + " strong candidates." : "Here's what your trial found.")
@@ -601,8 +607,54 @@
       hireBlock = '<div class="card" style="margin-top:18px;"><p class="section-title">Hire confirmed</p><p class="section-sub">A rating request has been sent on the <a href="#/updates">Updates</a> feed.</p></div>';
     }
 
+    var jobStrip = job.title
+      ? ('<div class="job-summary-strip">' +
+          '<span class="jss-item"><b>' + esc(job.title) + '</b></span>' +
+          '<span class="jss-item">&#8377;' + Number(job.salaryMin).toLocaleString("en-IN") + '&ndash;&#8377;' + Number(job.salaryMax).toLocaleString("en-IN") + '</span>' +
+          '<span class="jss-item">' + esc(job.openings) + ' Openings</span>' +
+          '<span class="jss-item">' + D.estimateCandidateCount(job.title, job.city).toLocaleString("en-IN") + ' candidates available</span>' +
+          '<span class="jss-item">Expect 100+ calls/week</span>' +
+        '</div>')
+      : "";
+
+    var plansBlock;
+    if (st.subscribed) {
+      var subGroup = st.subscribedGroup === "multi" ? D.PLANS.multiHire : D.PLANS.singleHire;
+      var subTier = subGroup.tiers.filter(function (t) { return t.id === st.subscribedTierId; })[0];
+      var subPriceText = subTier
+        ? '&#8377;' + subTier.perMonth.toLocaleString("en-IN") + '/month'
+        : '&#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month';
+      plansBlock = '<div class="card">' +
+        '<p class="section-title">You\'re subscribed' + (subTier ? ' &mdash; ' + esc(subTier.name) + (subGroup === D.PLANS.multiHire ? ' (Multi Hires)' : '') : '') + '</p>' +
+        '<p class="section-sub">' + subPriceText + '. One flat fee, no commission on salary.</p>' +
+      '</div>';
+    } else {
+      var activeGroup = st.billingTab === "multi" ? D.PLANS.multiHire : D.PLANS.singleHire;
+      plansBlock = '<div class="card">' +
+        '<p class="section-title">Continue hiring</p>' +
+        '<p class="section-sub">' + esc(activeGroup.tagline) + ' One flat fee &mdash; no commission on salary, ever.</p>' +
+        '<div class="promo-banner">&#127881; Limited-time offer &mdash; get up to 7 extra days free on any plan you buy now.</div>' +
+        '<div class="billing-tabs">' +
+          '<button type="button" class="billing-tab' + (st.billingTab !== "multi" ? ' active' : '') + '" data-action="set-billing-tab" data-id="single">Single Hire</button>' +
+          '<button type="button" class="billing-tab' + (st.billingTab === "multi" ? ' active' : '') + '" data-action="set-billing-tab" data-id="multi">Multi Hires <span class="billing-tab-save">' + D.PLANS.multiHire.saveBadge + '</span></button>' +
+        '</div>' +
+        '<div class="plan-grid plan-grid-wide">' + activeGroup.tiers.map(function (t) { return renderPlanTier(t, st.billingTab); }).join("") + '</div>' +
+      '</div>';
+    }
+
+    var trustBlock = '<div class="card trust-card">' +
+      '<p class="section-title">Why employers trust WorkIndia</p>' +
+      '<div class="trust-grid">' +
+        trustItem("&#128274;", "Your number stays private", "Every call runs through the platform &mdash; candidates never see your personal number.") +
+        trustItem("&#127911;", "Every call is recorded", "Play back any screening or recruiter call, any time, for your own records.") +
+        trustItem("&#8377;", "No commission, ever", "One flat fee whatever the salary &mdash; not a staffing consultancy cut.") +
+        trustItem("&#10060;", "Cancel anytime", "No lock-in beyond the plan you choose &mdash; cancel a trial within 3 days at no cost.") +
+      '</div>' +
+    '</div>';
+
     return (
       '<div>' +
+        jobStrip +
         '<div class="evidence-box">' +
           '<p class="section-title" style="margin-bottom:10px;">' + heroText + '</p>' +
           '<div class="evidence-row"><span>Profiles reviewed</span><span class="v">' + reviewed + ' / ' + D.TOTAL_ALLOCATION + '</span></div>' +
@@ -610,30 +662,51 @@
           '<div class="evidence-row"><span>Candidates shortlisted</span><span class="v">' + shortlisted + ' / ' + D.SHORTLIST_TARGET + '</span></div>' +
           '<div class="evidence-row"><span>Days used</span><span class="v">' + st.day + ' / ' + D.TRIAL_DAY_CAP + '</span></div>' +
         '</div>' +
-
-        (st.subscribed
-          ? '<div class="card"><p class="section-title">You\'re subscribed</p><p class="section-sub">&#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month. One flat fee, no commission on salary.</p></div>'
-          : '<div class="card">' +
-            '<p class="section-title">Continue hiring</p>' +
-            '<p class="section-sub">One flat fee. No commission on salary, ever &mdash; not a staffing consultancy.</p>' +
-            '<div class="plan-grid">' +
-              planCard("Monthly", D.PLANS.monthly, "/month", ["100 candidate unlocks", "Boost job 3&times;", "Unlimited responses"]) +
-              planCard("Yearly", D.PLANS.yearlyPerMonth, "/month, billed yearly", ["800 candidate unlocks", "Boost job 24&times;", "Most popular"], true) +
-            '</div>' +
-            '<button class="btn primary full" style="margin-top:16px;" data-action="subscribe">Subscribe &amp; keep hiring</button>' +
-          '</div>'
-        ) +
+        plansBlock +
+        trustBlock +
         hireBlock +
       '</div>'
     );
   }
 
-  function planCard(name, price, suffix, feats, highlight) {
-    return '<div class="plan-card ' + (highlight ? "highlight" : "") + '">' +
-      '<div style="font-weight:700;font-size:13px;">' + name + (highlight ? ' <span class="pill success">Popular</span>' : "") + '</div>' +
-      '<div class="plan-price">&#8377;' + price.toLocaleString("en-IN") + '<span style="font-size:12px;color:var(--muted);font-weight:500;">' + suffix + '</span></div>' +
-      feats.map(function (f) { return '<div class="plan-feat">&#10003; ' + f + '</div>'; }).join("") +
-    '</div>';
+  function pad2(n) { n = String(n); return n.length < 2 ? "0" + n : n; }
+
+  function trustItem(icon, title, sub) {
+    return '<div class="trust-item"><div class="trust-icon">' + icon + '</div><div><div class="trust-item-title">' + title + '</div><div class="trust-item-sub">' + sub + '</div></div></div>';
+  }
+
+  // One pricing tier card, matching the real plans page's feature lines
+  // (reach, active jobs, unlock count, boosts, validity, one-click live).
+  function renderPlanTier(tier, group) {
+    var isTrial = tier.id === "trial";
+    var reachLine = tier.reach === "limited"
+      ? "Limited reach &mdash; fewer candidate calls &amp; applies"
+      : "High reach &mdash; more relevant calls &amp; applies for &ldquo;Faster Hiring&rdquo;";
+    var feats = [reachLine];
+    feats.push("Keep only " + pad2(tier.jobsActive) + " job" + (tier.jobsActive > 1 ? "s" : "") + " active");
+    feats.push("Unlock " + tier.unlocks.toLocaleString("en-IN") + " candidate profiles from database");
+    if (tier.boosts > 0) feats.push("Boost job" + (tier.jobsActive > 1 ? "s" : "") + " up to " + tier.boosts + " times");
+    feats.push("Post unlimited jobs and get unlimited responses");
+    feats.push("Valid for " + tier.validDays + " days");
+    feats.push("Make job live &amp; unlock candidates in one click");
+
+    var priceBlock = isTrial
+      ? ('<div class="plan-price">' + tier.priceLabel + '</div><div class="plan-price-sub">' + tier.priceSub + '</div>')
+      : ('<div class="plan-price">&#8377;' + tier.perMonth.toLocaleString("en-IN") + '<span class="plan-price-unit">/month</span></div>' +
+         (tier.payUpfront ? '<div class="plan-price-sub">Pay Upfront: &#8377;' + tier.payUpfront.toLocaleString("en-IN") + '</div>' : ''));
+
+    return (
+      '<div class="plan-card' + (tier.popular ? ' highlight' : '') + '">' +
+        (tier.popular ? '<div class="plan-ribbon">&#9733; Most Popular</div>' : '') +
+        (tier.badge ? '<div class="plan-badge">' + tier.badge + '</div>' : '') +
+        '<div class="plan-name">' + esc(tier.name) + '</div>' +
+        priceBlock +
+        '<button class="btn ' + (tier.popular ? "primary" : "ghost") + ' full" style="margin:12px 0 14px;" data-action="subscribe-tier" data-id="' + tier.id + '" data-group="' + group + '">' + (isTrial ? "Start Trial Now" : "Buy Now") + '</button>' +
+        feats.map(function (f) { return '<div class="plan-feat">&#10003; ' + f + '</div>'; }).join("") +
+        (tier.note ? '<div class="plan-note">' + tier.note + '</div>' : '') +
+        (tier.cancelNote ? '<div class="plan-cancel-note">' + tier.cancelNote + '</div>' : '') +
+      '</div>'
+    );
   }
 
   // ---------------- Updates (WhatsApp-style feed) ----------------

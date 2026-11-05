@@ -285,17 +285,42 @@
     return pool;
   }
 
-  // Mirrors the real WorkIndia employer pricing (Single Hire tab), as shown
-  // on the live plans page — not invented numbers.
+  // Mirrors the real WorkIndia employer pricing page (both the Single Hire
+  // and Multi Hires tabs) — real tier names, prices, unlock counts and
+  // feature lines, not invented numbers.
   var PLANS = {
     trialDueToday: 1,
     trialRenewalAmount: 2499,
-    tiers: [
-      { id: "1m", name: "1 Month", perMonth: 2499, payUpfront: 2499, validDays: 30, unlocks: 100, boosts: 3, note: null },
-      { id: "3m", name: "3 Months", perMonth: 1666, payUpfront: 4999, validDays: 95, unlocks: 300, boosts: 9, note: "Get 5 extra days" },
-      { id: "12m", name: "1 Year", perMonth: 916, payUpfront: 11000, validDays: 372, unlocks: 800, boosts: 24, note: "Get 7 extra days", popular: true }
-    ]
+    singleHire: {
+      label: "Single Hire",
+      tagline: "Hire for One Role at a time.",
+      tiers: [
+        {
+          id: "trial", name: "3-Day Trial", badge: "Limited Access",
+          priceLabel: "Just ₹1", priceSub: "then ₹2,499/m, cancel trial anytime.",
+          reach: "limited", jobsActive: 1, unlocks: 5, boosts: 0, validDays: 3,
+          note: "3-Day Trial then renews to 1 month plan",
+          cancelNote: "Cancel your trial anytime within 3 days at no cost."
+        },
+        { id: "1m", name: "1 Month", perMonth: 2499, payUpfront: 2499, reach: "high", jobsActive: 1, unlocks: 100, boosts: 3, validDays: 30, note: null },
+        { id: "3m", name: "3 Months Plan", perMonth: 1666, payUpfront: 4999, reach: "high", jobsActive: 1, unlocks: 300, boosts: 9, validDays: 90, note: "Get 5 extra days" },
+        { id: "12m", name: "1 Year Plan", perMonth: 916, payUpfront: 11000, reach: "high", jobsActive: 1, unlocks: 800, boosts: 24, validDays: 365, note: "Get 7 extra days", popular: true }
+      ]
+    },
+    multiHire: {
+      label: "Multi Hires",
+      saveBadge: "Save 52%",
+      tagline: "Hire for Many Roles together.",
+      tiers: [
+        { id: "1m", name: "1 Month Plan", perMonth: 4999, payUpfront: null, reach: "high", jobsActive: 3, unlocks: 400, boosts: 10, validDays: 30, note: null, popular: true },
+        { id: "3m", name: "3 Months Plan", perMonth: 3066, payUpfront: 9200, reach: "high", jobsActive: 3, unlocks: 900, boosts: 27, validDays: 90, note: null },
+        { id: "12m", name: "1 Year Plan", perMonth: 1750, payUpfront: 21000, reach: "high", jobsActive: 3, unlocks: 2400, boosts: 72, validDays: 365, note: null }
+      ]
+    }
   };
+  // Flat alias (paid tiers only, Single Hire) for the compact in-flow
+  // paywall modal shown the moment the trial's 5 unlocks run out.
+  PLANS.tiers = PLANS.singleHire.tiers.filter(function (t) { return t.id !== "trial"; });
 
   var ROLE_SUGGESTIONS = ["Delivery Executive", "Driver", "Security Guard", "Telecaller", "Retail Associate",
     "Warehouse Picker", "Housekeeping Staff", "Field Sales Executive", "Technician", "Back Office Executive"];
