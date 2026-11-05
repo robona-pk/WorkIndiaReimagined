@@ -367,6 +367,7 @@
         '<div class="trial-shortlist-note">You can shortlist up to <b>' + D.SHORTLIST_TARGET + ' candidates</b> on this trial &middot; ' + st.shortlistedIds.length + '/' + D.SHORTLIST_TARGET + ' used</div>' +
         '<div class="cand-grid">' + cards + '</div>' +
         (st.showPaywall ? renderPaywall() : "") +
+        (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
     );
   }
@@ -396,6 +397,82 @@
               '</div>';
             }).join("") +
           '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function findTier(group, tierId) {
+    var g = group === "multi" ? D.PLANS.multiHire : D.PLANS.singleHire;
+    return g.tiers.filter(function (t) { return t.id === tierId; })[0] || null;
+  }
+
+  function paymentMethodLabel(m) {
+    if (m === "upi") return "UPI";
+    if (m === "card") return "card";
+    if (m === "netbanking") return "netbanking";
+    return "your selected method";
+  }
+
+  // ---------------- Mock payment modal ----------------
+  // Purely illustrative — no real gateway, no real charge. Walks through
+  // picking a method, a brief "processing" beat, then success; the tier
+  // only actually becomes subscribed once that beat completes (see
+  // Actions.completePayment), not the moment "Buy Now" is clicked.
+  function renderPaymentModal() {
+    var st = S.get();
+    var tier = findTier(st.paymentGroup, st.paymentTierId);
+    if (!tier) return "";
+    var amount = tier.payUpfront ? tier.payUpfront : (tier.priceLabel ? 1 : tier.perMonth);
+    var amountLabel = "&#8377;" + amount.toLocaleString("en-IN");
+
+    if (st.paymentStep === "success") {
+      return (
+        '<div class="call-overlay">' +
+          '<div class="payment-panel">' +
+            '<div class="payment-success-check">&#10003;</div>' +
+            '<p class="section-title" style="margin:10px 0 4px;">Payment successful</p>' +
+            '<p class="section-sub" style="margin-bottom:18px;">You&rsquo;re now on the <b>' + esc(tier.name) + '</b> plan.</p>' +
+            '<button class="btn primary full" data-action="close-payment-modal">Continue</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    if (st.paymentStep === "processing") {
+      return (
+        '<div class="call-overlay">' +
+          '<div class="payment-panel">' +
+            '<div class="match-spinner" style="margin-top:6px;"></div>' +
+            '<p class="section-title" style="margin:16px 0 4px;">Processing your payment&hellip;</p>' +
+            '<p class="section-sub">Paying ' + amountLabel + ' via ' + paymentMethodLabel(st.paymentMethod) + '. Don&rsquo;t close this window.</p>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    var methods = [
+      { id: "upi", icon: "&#128241;", label: "UPI", sub: "Google Pay, PhonePe, Paytm &amp; more" },
+      { id: "card", icon: "&#128179;", label: "Credit / Debit Card", sub: "Visa, Mastercard, RuPay" },
+      { id: "netbanking", icon: "&#127974;", label: "Netbanking", sub: "All major banks" }
+    ];
+    return (
+      '<div class="call-overlay" data-action-bg="close-payment-modal">' +
+        '<div class="payment-panel">' +
+          '<button class="paywall-close" data-action="close-payment-modal" aria-label="Close">&times;</button>' +
+          '<p class="section-title" style="margin-bottom:2px;">' + esc(tier.name) + '</p>' +
+          '<p class="payment-amount">' + amountLabel + '</p>' +
+          '<p class="section-sub" style="margin-bottom:16px;">Choose a payment method</p>' +
+          methods.map(function (m) {
+            var selected = st.paymentMethod === m.id;
+            return '<button type="button" class="payment-method-row' + (selected ? ' selected' : '') + '" data-action="select-payment-method" data-id="' + m.id + '">' +
+              '<span class="payment-method-icon">' + m.icon + '</span>' +
+              '<span class="payment-method-text"><span class="payment-method-label">' + m.label + '</span><span class="payment-method-sub">' + m.sub + '</span></span>' +
+              '<span class="payment-method-radio' + (selected ? ' checked' : '') + '"></span>' +
+            '</button>';
+          }).join("") +
+          '<button class="btn primary full" style="margin-top:16px;" data-action="pay-now"' + (st.paymentMethod ? '' : ' disabled') + '>Pay ' + amountLabel + '</button>' +
+          '<p class="payment-note">&#128274; This is a prototype &mdash; no real payment is made.</p>' +
         '</div>' +
       '</div>'
     );
@@ -483,6 +560,7 @@
         (st.callOverlayFor ? renderCallOverlay(byId[st.callOverlayFor]) : "") +
         (st.profileOpenFor ? renderCandidateProfileOverlay(byId[st.profileOpenFor]) : "") +
         (st.showPaywall ? renderPaywall() : "") +
+        (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
     );
   }
@@ -665,6 +743,7 @@
         plansBlock +
         trustBlock +
         hireBlock +
+        (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
     );
   }

@@ -9,6 +9,7 @@
   var callTimerInterval = null;
   var matchingTimer = null;
   var countAnimTimer = null;
+  var paymentTimer = null;
 
   var TITLES = {
     dashboard: "Dashboard",
@@ -353,9 +354,30 @@
         render();
         break;
       case "subscribe-tier":
+        // "Buy Now" / "Start Trial Now" opens the mock payment modal —
+        // actually subscribing happens once that flow completes, not here.
         var tierGroup = (el && el.getAttribute("data-group")) || "single";
-        S.subscribe(id, tierGroup);
         S.closePaywall();
+        S.startPayment(id, tierGroup);
+        render();
+        break;
+      case "select-payment-method":
+        S.selectPaymentMethod(id);
+        render();
+        break;
+      case "pay-now":
+        S.beginPaymentProcessing();
+        render();
+        if (S.get().paymentStep === "processing") {
+          paymentTimer = setTimeout(function () {
+            S.completePayment();
+            render();
+          }, 1600);
+        }
+        break;
+      case "close-payment-modal":
+        if (paymentTimer) { clearTimeout(paymentTimer); paymentTimer = null; }
+        S.closePaymentModal();
         render();
         break;
       case "set-billing-tab":

@@ -42,7 +42,11 @@
       micPermissionDenied: false, // true once the browser mic prompt has been denied/unsupported, so we stop re-asking
       billingTab: "single",      // "single" | "multi" — which pricing tab is showing on Trial & Billing
       subscribedTierId: null,    // e.g. "1m" | "3m" | "12m" — which plan tier they subscribed to
-      subscribedGroup: null      // "single" | "multi" — which tab that tier was chosen from
+      subscribedGroup: null,     // "single" | "multi" — which tab that tier was chosen from
+      paymentTierId: null,       // mock payment flow — set while the "Buy Now" modal is open
+      paymentGroup: null,
+      paymentStep: null,         // "method" | "processing" | "success"
+      paymentMethod: null        // "upi" | "card" | "netbanking"
     };
   }
 
@@ -185,6 +189,47 @@
 
     setBillingTab: function (tab) {
       state.billingTab = (tab === "multi") ? "multi" : "single";
+      save(state);
+    },
+
+    // ---- Mock payment flow (no real money, no real gateway) ----
+    // "Buy Now" opens a small modal: pick a method, pay, see it processed,
+    // see it succeed — only then is the tier actually subscribed. This is
+    // purely illustrative for the prototype/pitch, never a real charge.
+    startPayment: function (tierId, group) {
+      state.paymentTierId = tierId;
+      state.paymentGroup = (group === "multi") ? "multi" : "single";
+      state.paymentStep = "method";
+      state.paymentMethod = null;
+      save(state);
+    },
+
+    selectPaymentMethod: function (method) {
+      state.paymentMethod = method;
+      save(state);
+    },
+
+    beginPaymentProcessing: function () {
+      if (!state.paymentMethod) return;
+      state.paymentStep = "processing";
+      save(state);
+    },
+
+    // Called once the simulated processing delay elapses — this is the
+    // moment the tier actually becomes "bought."
+    completePayment: function () {
+      state.subscribed = true;
+      state.subscribedTierId = state.paymentTierId;
+      state.subscribedGroup = state.paymentGroup;
+      state.paymentStep = "success";
+      save(state);
+    },
+
+    closePaymentModal: function () {
+      state.paymentTierId = null;
+      state.paymentGroup = null;
+      state.paymentStep = null;
+      state.paymentMethod = null;
       save(state);
     },
 

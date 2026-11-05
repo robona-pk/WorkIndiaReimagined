@@ -399,6 +399,27 @@ a { color: var(--primary); }
 .btn.outline-shortlist { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); margin-top: 8px; }
 .paywall-panel { background: #fff; border-radius: 14px; padding: 26px; max-width: 760px; width: 94vw; max-height: 86vh; overflow-y: auto; position: relative; }
 .paywall-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1; }
+
+/* ============ mock payment modal ============ */
+.payment-panel { background: #fff; border-radius: 14px; padding: 26px; max-width: 380px; width: 92vw; position: relative; text-align: center; }
+.payment-panel .section-title, .payment-panel .section-sub { text-align: left; }
+.payment-amount { font-size: 26px; font-weight: 800; text-align: left; margin: 2px 0 10px; color: var(--ink); }
+.payment-method-row {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; background: #fff;
+  border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px; cursor: pointer; font: inherit;
+}
+.payment-method-row.selected { border-color: var(--primary); background: var(--primary-light); }
+.payment-method-icon { font-size: 18px; flex: 0 0 auto; }
+.payment-method-text { flex: 1; display: flex; flex-direction: column; }
+.payment-method-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+.payment-method-sub { font-size: 11px; color: var(--muted); }
+.payment-method-radio { width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--border); flex: 0 0 auto; }
+.payment-method-radio.checked { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 3px #fff; }
+.payment-note { font-size: 10.5px; color: var(--muted); text-align: center; margin-top: 12px; }
+.payment-success-check {
+  width: 54px; height: 54px; border-radius: 50%; background: var(--success-light); color: var(--success);
+  font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto;
+}
 .paywall-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 4px; }
 .paywall-card { border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; position: relative; }
 .paywall-card.popular { border-color: var(--success); }
