@@ -63,7 +63,7 @@
                 '</div>' +
                 '<ul class="land-list">' +
                   '<li>AI calls and screens candidates by voice before you see them</li>' +
-                  '<li>Your trial opens a sample of ' + D.TOTAL_ALLOCATION + ' verified profiles &mdash; not the full pool above &mdash; call via platform, your number stays private</li>' +
+                  '<li>Hot leads matched to your job &mdash; call via platform, your number stays private</li>' +
                 '</ul>' +
                 '<div class="flat-fee-note">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
               '</div>' +
@@ -306,7 +306,7 @@
     }
 
     if (exhausted && st.batchIndex >= 2) {
-      return '<div class="locked-banner">You\'ve reviewed all ' + D.TOTAL_ALLOCATION + ' profiles in this trial\'s sample. <a href="#/billing">See what it found &rarr;</a></div>';
+      return '<div class="locked-banner">You\'ve reviewed all ' + D.TOTAL_ALLOCATION + ' profiles included in this trial. <a href="#/billing">See what it found &rarr;</a></div>';
     }
     if (exhausted) {
       return '<div class="locked-banner">' +
