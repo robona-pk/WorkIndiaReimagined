@@ -190,17 +190,20 @@
       save(state);
     },
 
-    // Returns true if the shortlist succeeded, false if it hit the trial
-    // cap and the paywall should be shown instead.
+    // Returns true if the shortlist (contact unlock) succeeded, false if
+    // the trial's already over and the paywall should be shown instead.
+    // The unlock that reaches SHORTLIST_TARGET is itself allowed to
+    // succeed — it's the one that ends the trial (see checkTrialEnd) —
+    // only attempts AFTER that point are blocked.
     shortlistCandidate: function (candidateId) {
       if (state.shortlistedIds.indexOf(candidateId) !== -1) return true;
-      if (!state.subscribed && state.shortlistedIds.length >= global.WI_DATA.SHORTLIST_TARGET) {
+      if (!state.subscribed && (state.trialEnded || state.shortlistedIds.length >= global.WI_DATA.SHORTLIST_TARGET)) {
         state.showPaywall = true;
         save(state);
         return false;
       }
       state.shortlistedIds.push(candidateId);
-      pushUpdate("Nice — you've shortlisted " + state.shortlistedIds.length + " of " + global.WI_DATA.SHORTLIST_TARGET + " candidates included in your trial.");
+      pushUpdate("Nice — you've unlocked " + state.shortlistedIds.length + " of " + global.WI_DATA.SHORTLIST_TARGET + " contacts included in your trial.");
       checkTrialEnd();
       save(state);
       return true;
@@ -244,13 +247,20 @@
     }
   }
 
-  // Reaching the 3-shortlist trial cap does NOT end the trial by itself —
-  // the hiring manager can keep reviewing; trying to shortlist a 4th is
-  // what surfaces the paywall (see Actions.shortlistCandidate). The trial
-  // only auto-ends on allocation or day-cap, same as before.
+  // The trial ends on whichever of these comes first:
+  //   - SHORTLIST_TARGET contacts unlocked (the primary, intended path —
+  //     the recruiter got real value and converting is the next step)
+  //   - the shown sample of profiles is fully reviewed (allocation_exhausted)
+  //   - the 7-day window closes (day_cap)
+  // Only a limited sample of the real local supply is ever shown in a
+  // trial (see estimateCandidateCount) — this isn't the full database, so
+  // exhausting it isn't itself a sign of abuse, just the trial doing its job.
   function checkTrialEnd() {
     if (state.trialEnded) return;
-    if (state.reviewed >= global.WI_DATA.TOTAL_ALLOCATION) {
+    if (!state.subscribed && state.shortlistedIds.length >= global.WI_DATA.SHORTLIST_TARGET) {
+      state.trialEnded = true;
+      state.trialEndReason = "shortlist_target";
+    } else if (state.reviewed >= global.WI_DATA.TOTAL_ALLOCATION) {
       state.trialEnded = true;
       state.trialEndReason = "allocation_exhausted";
     } else if (state.day >= global.WI_DATA.TRIAL_DAY_CAP) {

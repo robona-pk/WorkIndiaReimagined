@@ -78,9 +78,16 @@ a { color: var(--primary); }
   opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto;
 }
 .trial-tooltip-title { font-size: 13px; font-weight: 800; margin: 0 0 10px; color: var(--ink); }
-.trial-tooltip ul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.6; color: var(--ink); }
-.trial-tooltip li { margin-bottom: 9px; }
-.trial-tooltip li:last-child { margin-bottom: 0; }
+.trial-steps { list-style: none; margin: 0; padding: 0; }
+.trial-steps li {
+  display: flex; align-items: center; gap: 10px; font-size: 12.5px; line-height: 1.35; color: var(--ink);
+  margin-bottom: 10px;
+}
+.trial-steps li:last-child { margin-bottom: 0; }
+.trial-step-icon {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px; background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
+}
 @media (max-width: 520px) {
   .trial-tooltip { width: 260px; }
 }

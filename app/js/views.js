@@ -63,7 +63,7 @@
                 '</div>' +
                 '<ul class="land-list">' +
                   '<li>AI calls and screens candidates by voice before you see them</li>' +
-                  '<li>Review up to 30 verified profiles &mdash; call via platform, your number stays private</li>' +
+                  '<li>Your trial opens a sample of ' + D.TOTAL_ALLOCATION + ' verified profiles &mdash; not the full pool above &mdash; call via platform, your number stays private</li>' +
                 '</ul>' +
                 '<div class="flat-fee-note">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
               '</div>' +
@@ -306,7 +306,7 @@
     }
 
     if (exhausted && st.batchIndex >= 2) {
-      return '<div class="locked-banner">You\'ve reviewed all 30 profiles included in this trial. <a href="#/billing">See what it found &rarr;</a></div>';
+      return '<div class="locked-banner">You\'ve reviewed all ' + D.TOTAL_ALLOCATION + ' profiles in this trial\'s sample. <a href="#/billing">See what it found &rarr;</a></div>';
     }
     if (exhausted) {
       return '<div class="locked-banner">' +
@@ -378,7 +378,7 @@
       '<div class="call-overlay" data-action-bg="close-paywall">' +
         '<div class="paywall-panel">' +
           '<button class="paywall-close" data-action="close-paywall" aria-label="Close">&times;</button>' +
-          '<p class="section-title">You\'ve used all 3 trial shortlists</p>' +
+          '<p class="section-title">You\'ve used all ' + D.SHORTLIST_TARGET + ' trial contact unlocks</p>' +
           '<p class="section-sub" style="margin-bottom:18px;">Keep hiring beyond the trial with a flat-fee plan &mdash; no commission on salary, ever.</p>' +
           '<div class="paywall-grid">' +
             tiers.map(function (t) {
@@ -465,13 +465,20 @@
       );
     }
 
-    return (
-      '<div>' +
-        '<div class="card" style="margin-bottom:18px;">' +
+    // Once the trial has ended (contact unlocks used up, sample exhausted,
+    // or the 7-day window closed), no new calls can be placed — only past
+    // call history stays reviewable. Mirrors the gate on the Candidates tab.
+    var readyCard = st.trialEnded
+      ? '<div class="card" style="margin-bottom:18px;"><p class="section-title">Trial complete</p><p class="section-sub">Calling is part of the paid plan now. <a href="#/billing">See what your trial found &rarr;</a></p></div>'
+      : ('<div class="card" style="margin-bottom:18px;">' +
           '<p class="section-title">Ready to call</p>' +
           '<p class="section-sub">Masked, platform-only. No external number is ever shown &mdash; a call must connect to count toward your trial.</p>' +
           (waiting.length ? waiting.map(waitingRow).join("") : '<p class="hint">No unlocked candidates waiting right now &mdash; mark some Relevant on the <a href="#/candidates">Candidates</a> page first.</p>') +
-        '</div>' +
+        '</div>');
+
+    return (
+      '<div>' +
+        readyCard +
         (called.length ? '<div class="card"><p class="section-title">Call history</p><p class="section-sub">Tap a name to open the full profile. Each call has its own recording and a quick summary.</p>' + called.map(doneRow).join("") + '</div>' : "") +
         (st.callOverlayFor ? renderCallOverlay(byId[st.callOverlayFor]) : "") +
         (st.profileOpenFor ? renderCandidateProfileOverlay(byId[st.profileOpenFor]) : "") +
