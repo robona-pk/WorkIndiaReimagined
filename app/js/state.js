@@ -37,6 +37,8 @@
       hireRating: null,
       hiredAt: null,             // ISO timestamp set the moment a hire is confirmed — feedback is only asked for after HIRE_FEEDBACK_DELAY_DAYS
       jobDetailsOpen: false,     // My Jobs card: whether the job row is expanded
+      expandedPastJobId: null,   // My Jobs page: which closed-job row (from MOCK_PAST_JOBS) is expanded
+      mockJobRatings: {},        // past-job id -> rating, once the feedback nudge is answered (overrides the seed data's default rating)
       updatesFeed: [],           // WhatsApp-style message log
       callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
       profileOpenFor: null,      // candidateId whose profile overlay is open, or null
@@ -317,6 +319,16 @@
 
     toggleJobDetails: function () {
       state.jobDetailsOpen = !state.jobDetailsOpen;
+      save(state);
+    },
+
+    togglePastJob: function (jobId) {
+      state.expandedPastJobId = (state.expandedPastJobId === jobId) ? null : jobId;
+      save(state);
+    },
+
+    rateMockJob: function (jobId, rating) {
+      state.mockJobRatings[jobId] = rating;
       save(state);
     },
 

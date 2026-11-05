@@ -370,6 +370,51 @@
     { name: "Technicians", icon: "🔧", role: "Technician" }
   ];
 
+  // Past jobs this employer has already closed out, shown on My Jobs below
+  // the current open role so the hire -> 3-month feedback nudge has real
+  // history to sit alongside, not just one job. hiredDaysAgo is fixed per
+  // entry (not wall-clock) so the "waited X / Y days" math stays stable
+  // across a demo session; most are past the 90-day gate, one is still
+  // waiting, and one already has feedback recorded.
+  var MOCK_PAST_JOBS = [
+    {
+      id: "pj1", title: "Delivery Executive", city: "Mumbai", area: "Andheri East",
+      salaryMin: 16000, salaryMax: 21000, openings: 4,
+      postedDaysAgo: 158, hiredDaysAgo: 142, candidateName: "Rahul Jadhav",
+      rating: "great"
+    },
+    {
+      id: "pj2", title: "Telecaller", city: "Pune", area: "Hinjewadi",
+      salaryMin: 14000, salaryMax: 18000, openings: 2,
+      postedDaysAgo: 134, hiredDaysAgo: 119, candidateName: "Sneha Kulkarni",
+      rating: null
+    },
+    {
+      id: "pj3", title: "Security Guard", city: "Bengaluru", area: "Whitefield",
+      salaryMin: 15000, salaryMax: 19000, openings: 3,
+      postedDaysAgo: 121, hiredDaysAgo: 108, candidateName: "Manjunath Gowda",
+      rating: "ok"
+    },
+    {
+      id: "pj4", title: "Field Sales Executive", city: "Delhi", area: "Laxmi Nagar",
+      salaryMin: 18000, salaryMax: 25000, openings: 2,
+      postedDaysAgo: 97, hiredDaysAgo: 94, candidateName: "Vikas Chaudhary",
+      rating: null
+    },
+    {
+      id: "pj5", title: "Warehouse Picker", city: "Mumbai", area: "Bhiwandi",
+      salaryMin: 13500, salaryMax: 17000, openings: 5,
+      postedDaysAgo: 61, hiredDaysAgo: 48, candidateName: "Suresh Patil",
+      rating: null // still inside the 90-day window — shows the waiting state
+    },
+    {
+      id: "pj6", title: "Housekeeping Staff", city: "Pune", area: "Kothrud",
+      salaryMin: 12000, salaryMax: 15000, openings: 1,
+      postedDaysAgo: 203, hiredDaysAgo: 188, candidateName: "Meenal Shinde",
+      rating: "great"
+    }
+  ];
+
   global.WI_DATA = {
     CANDIDATE_POOL: buildCandidatePool(30),
     BATCH_SIZE: 10,
@@ -381,6 +426,7 @@
     ROLE_SUGGESTIONS: ROLE_SUGGESTIONS,
     CITY_SUGGESTIONS: CITY_SUGGESTIONS,
     CATEGORIES: CATEGORIES,
+    MOCK_PAST_JOBS: MOCK_PAST_JOBS,
     estimateCandidateCount: estimateCandidateCount,
     suggestJobSpec: suggestJobSpec,
     buildRecruiterCallSummary: buildRecruiterCallSummary

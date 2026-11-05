@@ -404,6 +404,14 @@
         S.toggleJobDetails();
         render();
         break;
+      case "toggle-past-job":
+        S.togglePastJob(id);
+        render();
+        break;
+      case "rate-mock-job":
+        S.rateMockJob(el.getAttribute("data-job-id"), el.getAttribute("data-rating"));
+        render();
+        break;
     }
   }
 

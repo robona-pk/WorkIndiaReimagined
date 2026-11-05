@@ -836,10 +836,75 @@
   // ---------------- My Jobs (own top-level section) ----------------
   function renderJobsPage() {
     var st = S.get();
-    if (!st.job) {
-      return '<div class="card"><p class="section-title">No job posted yet</p><p class="section-sub">Once you post a job it&rsquo;ll show up here with its status, requirements, and hire &amp; feedback tracking.</p></div>';
+    var currentBlock = st.job
+      ? renderMyJobs(st)
+      : '<div class="card"><p class="section-title">No job posted yet</p><p class="section-sub">Once you post a job it&rsquo;ll show up here with its status, requirements, and hire &amp; feedback tracking.</p></div>';
+
+    var pastJobs = D.MOCK_PAST_JOBS || [];
+    var pastBlock = pastJobs.length
+      ? ('<div class="card my-jobs-card" style="margin-top:14px;">' +
+          '<p class="section-title" style="margin-bottom:4px;">Past Hires</p>' +
+          '<p class="section-sub" style="margin-bottom:12px;">Roles you&rsquo;ve closed out through WorkIndia &mdash; we check in ' + D.HIRE_FEEDBACK_DELAY_DAYS + ' days after each hire to see how it&rsquo;s working out.</p>' +
+          pastJobs.map(function (pj) { return renderPastJobRow(st, pj); }).join("") +
+        '</div>')
+      : "";
+
+    return currentBlock + pastBlock;
+  }
+
+  // A closed, already-hired role from the mock hiring history. Mirrors
+  // renderMyJobs' row/expand/feedback pattern but keyed by job id, since
+  // this prototype can show several past hires at once instead of one.
+  function renderPastJobRow(st, pj) {
+    var expanded = st.expandedPastJobId === pj.id;
+    var rating = st.mockJobRatings.hasOwnProperty(pj.id) ? st.mockJobRatings[pj.id] : pj.rating;
+    var waited = pj.hiredDaysAgo;
+    var delay = D.HIRE_FEEDBACK_DELAY_DAYS;
+
+    var detailBlock = expanded
+      ? ('<div class="job-detail-grid">' +
+          jobDetailCell("Hired", esc(pj.candidateName)) +
+          jobDetailCell("Area", pj.area || "&mdash;") +
+          jobDetailCell("City", pj.city || "&mdash;") +
+          jobDetailCell("Openings", pj.openings) +
+          jobDetailCell("Posted", relativeDaysLabel(daysAgoIso(pj.postedDaysAgo))) +
+          jobDetailCell("Hired on", relativeDaysLabel(daysAgoIso(pj.hiredDaysAgo))) +
+        '</div>')
+      : "";
+
+    var actionsBlock;
+    if (rating) {
+      actionsBlock = '<div class="job-feedback-done">&#10003; Feedback recorded for ' + esc(pj.candidateName) + ': <b>' + hireRatingLabel(rating) + '</b></div>';
+    } else if (waited >= delay) {
+      actionsBlock = '<div class="job-feedback-cta">' +
+        '<p class="section-sub" style="margin-bottom:8px;">' + esc(pj.candidateName) + ' has been onboard ' + delay + '+ days &mdash; was the hire a good fit?</p>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+          '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-mock-job" data-job-id="' + pj.id + '" data-rating="great">&#11088; Great fit</button>' +
+          '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-mock-job" data-job-id="' + pj.id + '" data-rating="ok">&#11088; Okay so far</button>' +
+          '<button class="btn ghost" style="padding:7px 12px;font-size:11.5px;" data-action="rate-mock-job" data-job-id="' + pj.id + '" data-rating="bad">&#11088; Not working out</button>' +
+        '</div>' +
+      '</div>';
+    } else {
+      actionsBlock = '<div class="job-feedback-wait"><b>' + esc(pj.candidateName) + '</b> was hired for this role. We check in ' + delay + ' days after a hire &mdash; ' + (delay - waited) + ' to go.</div>';
     }
-    return renderMyJobs(st);
+
+    return (
+      '<div class="job-row' + (expanded ? ' expanded' : '') + '" data-action="toggle-past-job" data-id="' + pj.id + '" style="margin-top:10px;">' +
+        '<div class="job-row-main">' +
+          '<span class="job-status-badge closed">&#9679; Closed &middot; Hired</span>' +
+          '<div class="job-row-title">' + esc(pj.title) + '</div>' +
+          '<div class="job-row-sub">' + esc(pj.area || pj.city || "") + ' &middot; &#8377;' + Number(pj.salaryMin).toLocaleString("en-IN") + '&ndash;&#8377;' + Number(pj.salaryMax).toLocaleString("en-IN") + ' &middot; ' + esc(pj.openings) + ' openings &middot; ' + relativeDaysLabel(daysAgoIso(pj.postedDaysAgo)) +
+          '</div>' +
+        '</div>' +
+        '<span class="job-row-chevron">' + (expanded ? "&#9650;" : "&#9660;") + '</span>' +
+      '</div>' +
+      detailBlock +
+      '<div class="job-actions">' + actionsBlock + '</div>'
+    );
+  }
+
+  function daysAgoIso(days) {
+    return new Date(Date.now() - days * 86400000).toISOString();
   }
 
   // One job row (this prototype only tracks one job at a time) with its
