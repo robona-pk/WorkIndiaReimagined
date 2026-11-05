@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkIndia Reimagined — Trial Experience Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">W</span>
+      <div class="brand-text">
+        <strong>WorkIndia Reimagined</strong>
+        <span>Trial experience prototype · built from call data, interviews &amp; a live walkthrough</span>
+      </div>
+    </div>
+    <span class="badge">Prototype v1 — for discussion</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== PROBLEM ===================== -->
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">Why rethink the trial</p>
+      <h1>Employers don't trust the trial before day one starts.</h1>
+      <p class="lede">Every number below came from WorkIndia's own data — 12,541 sales calls, a cohort of 98,505 employers, the ANN activation study, ten-plus first-week employer interviews, and a live walkthrough of the production employer flow.</p>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="stat-num">10.3×</span>
+          <span class="stat-label">higher conversion for employers who visit AND unlock a candidate, vs. the largest passive cohort</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">67%</span>
+          <span class="stat-label">of agent-posted employers never open the platform at all — their whole relationship is WhatsApp and a phone call</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">91%</span>
+          <span class="stat-label">of ₹1-trial first-time payers cancel the autopay mandate — most within the first hour</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">3×</span>
+          <span class="stat-label">the trial's own pricing copy tells the employer it's the inferior option, before they've used it once</span>
+        </div>
+      </div>
+
+      <div class="finding-strip">
+        <div class="finding">
+          <span class="finding-tag">Live bug found</span>
+          <p>A fresh employer who just paid the ₹1 trial hits <em>"Your wallet balance is low — buy a plan"</em> on their own job post, seconds after checkout. Wrong copy for a trial-account state, reproduced live on production.</p>
+        </div>
+        <div class="finding">
+          <span class="finding-tag">Interview insight</span>
+          <p>6 of 8 trial non-buyers who gave a reason cited candidate quality or responsiveness — not price, not trial length. Employers buy a hire, not access to a database.</p>
+        </div>
+        <div class="finding">
+          <span class="finding-tag">Interview insight</span>
+          <p>Multiple employers assumed WorkIndia charges a placement commission, like a consultancy. It's a flat one-time fee — and nothing in the flow says so until a sales call corrects it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== THE REBUILT FLOW ===================== -->
+  <section class="section alt">
+    <div class="wrap">
+      <p class="eyebrow">The rethink</p>
+      <h2>One trial, built around a hire — not a clock.</h2>
+      <p class="lede">Click through the six moments below. Marking candidates on screens 2–3 updates the trial progress and conversion screens live, the way a real trial would track toward an outcome instead of a countdown.</p>
+
+      <div class="stepper">
+        <button class="step-pill active" data-step="1">1 · Job live</button>
+        <button class="step-pill" data-step="2">2 · AI-screened candidate</button>
+        <button class="step-pill" data-step="3">3 · Platform call &amp; shortlist</button>
+        <button class="step-pill" data-step="4">4 · Trial progress</button>
+        <button class="step-pill" data-step="5">5 · Conversion moment</button>
+        <button class="step-pill" data-step="6">6 · Post-hire feedback</button>
+      </div>
+
+      <div class="stage">
+
+        <div class="phone-col">
+          <div class="phone">
+            <div class="phone-notch"></div>
+            <div class="phone-screen" id="screen-root"></div>
+          </div>
+          <div class="phone-nav">
+            <button id="prevStep" class="ghost-btn">&larr; Back</button>
+            <button id="resetDemo" class="ghost-btn">Reset demo</button>
+            <button id="nextStep" class="ghost-btn">Next &rarr;</button>
+          </div>
+        </div>
+
+        <aside class="annotation" id="annotation-root"></aside>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== WHAT CHANGES ===================== -->
+  <section class="section">
+    <div class="wrap">
+      <p class="eyebrow">Today vs. reimagined</p>
+      <h2>What specifically changes, and why</h2>
+
+      <table class="compare">
+        <thead>
+          <tr><th>Moment</th><th>Today</th><th>Reimagined</th><th>Evidence</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Trial length</td>
+            <td>Fixed 3 days, 5 leads/day, regardless of outcome</td>
+            <td>Ends at 3 shortlisted candidates, 30 profiles reviewed, or 7 days — whichever first</td>
+            <td>Interviews: employers judge by hire quality, not days used</td>
+          </tr>
+          <tr>
+            <td>Candidate review</td>
+            <td>One click unlocks contact, no relevance check first</td>
+            <td>AI pre-screens by voice (availability, pay, location, language) before the employer ever sees the profile; employer marks Relevant before contact unlocks</td>
+            <td>Prior WorkIndia UAT: employers couldn't judge relevance from static fields alone</td>
+          </tr>
+          <tr>
+            <td>Calling</td>
+            <td>Number revealed, calls happen off-platform</td>
+            <td>Platform-only, masked, call must connect to count — no external dialing</td>
+            <td>Enables the same call-quality analysis already run on 12,541 sales calls, now on hiring calls</td>
+          </tr>
+          <tr>
+            <td>Autopay mandate</td>
+            <td>Signed for full price on day zero, before any value delivered</td>
+            <td>Mandate stays (by design, to protect revenue) — but renewal is shown with evidence of what the trial delivered, not silently</td>
+            <td>91% cancellation rate; mandate itself is a fixed business constraint</td>
+          </tr>
+          <tr>
+            <td>Primary surface</td>
+            <td>Web dashboard, rarely opened</td>
+            <td>WhatsApp-first for agent-sourced employers; dashboard stays as the secondary view</td>
+            <td>67% of agent-posted employers never open the platform; WhatsApp Business API already live</td>
+          </tr>
+          <tr>
+            <td>Pricing framing</td>
+            <td>Trial labelled "Limited reach / less relevant calls" against paid plans' "High reach"</td>
+            <td>Neutral framing; trial sells itself on outcome, not on being told it's worse</td>
+            <td>Found on pricing page, checkout, and plan card — three separate times</td>
+          </tr>
+          <tr>
+            <td>Post-hire</td>
+            <td>No feedback loop between a hire and candidate quality</td>
+            <td>WhatsApp check-in asking the employer to rate the hire once confirmed</td>
+            <td>Feeds future "track record" signal and match-quality data over time</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="open-params">
+        <strong>Open parameters, not fixed rules:</strong>
+        <ul>
+          <li>Batch depth (10 profiles/batch, 30 total) is an illustrative default — likely needs tuning by candidate-pool size per role/city, not a single number for every job.</li>
+          <li>A Relevant mark with no connected call doesn't block progress — the profile stays unlocked and retryable, pending validation this is the right default.</li>
+          <li>Whether "relevant" self-reporting needs a light objective check (e.g. requiring a connected call &gt;60s) to resist gaming in either direction.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="wrap">
+      <span>Built for first-week onboarding discussion · WorkIndia Hunting · Nov 2026</span>
+    </div>
+  </footer>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
