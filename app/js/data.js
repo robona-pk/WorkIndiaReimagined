@@ -91,12 +91,50 @@
     yearlyPerMonth: 916
   };
 
+  var ROLE_SUGGESTIONS = ["Delivery Executive", "Driver", "Security Guard", "Telecaller", "Retail Associate",
+    "Warehouse Picker", "Housekeeping Staff", "Field Sales Executive", "Technician", "Back Office Executive"];
+
+  var CITY_SUGGESTIONS = ["Mumbai", "Delhi NCR", "Bengaluru", "Hyderabad", "Pune", "Kolkata", "Chennai", "Ahmedabad"];
+
+  // Deterministic pseudo-count so the same role+city always shows the same
+  // number within a session, without pretending to query a real database.
+  function estimateCandidateCount(role, city) {
+    var str = (role || "") + "|" + (city || "");
+    var h = 0;
+    for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; }
+    return 8000 + (h % 37000);
+  }
+
+  // A rough, explainable AI-generated job spec from just a role + city —
+  // mirrors the one genuinely useful bit of the real platform's posting flow.
+  function suggestJobSpec(role) {
+    var r = (role || "").toLowerCase();
+    var spec = {
+      experience: "0–2 years",
+      education: "No minimum",
+      gender: "Any",
+      english: "Not required",
+      distanceKm: 8,
+      salaryMin: 14000,
+      salaryMax: 19000
+    };
+    if (r.indexOf("security") !== -1) { spec.gender = "Male preferred"; spec.salaryMin = 13000; spec.salaryMax = 17000; }
+    if (r.indexOf("telecaller") !== -1 || r.indexOf("sales") !== -1) { spec.english = "Basic English"; spec.education = "10th pass"; spec.salaryMin = 15000; spec.salaryMax = 22000; }
+    if (r.indexOf("driver") !== -1) { spec.experience = "1–3 years"; spec.distanceKm = 12; }
+    if (r.indexOf("back office") !== -1 || r.indexOf("technician") !== -1) { spec.education = "12th pass"; spec.salaryMin = 16000; spec.salaryMax = 24000; }
+    return spec;
+  }
+
   global.WI_DATA = {
     CANDIDATE_POOL: buildCandidatePool(30),
     BATCH_SIZE: 10,
     TOTAL_ALLOCATION: 30,
     SHORTLIST_TARGET: 3,
     TRIAL_DAY_CAP: 7,
-    PLANS: PLANS
+    PLANS: PLANS,
+    ROLE_SUGGESTIONS: ROLE_SUGGESTIONS,
+    CITY_SUGGESTIONS: CITY_SUGGESTIONS,
+    estimateCandidateCount: estimateCandidateCount,
+    suggestJobSpec: suggestJobSpec
   };
 })(window);

@@ -40,8 +40,10 @@
     if (!st.onboarded) {
       document.getElementById("appShell").style.display = "none";
       document.getElementById("onboardRoot").style.display = "block";
-      document.getElementById("onboardRoot").innerHTML = V.onboarding();
-      wireOnboardForm();
+      var step = st.flowStep || "search";
+      document.getElementById("onboardRoot").innerHTML = (V[step] || V.search)();
+      wireFlowForms();
+      wireViewActions();
       return;
     }
 
@@ -58,22 +60,48 @@
     wireViewActions();
   }
 
-  function wireOnboardForm() {
-    var form = document.getElementById("onboardForm");
-    if (!form) return;
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var fd = new FormData(form);
-      S.postJob(fd.get("company"), fd.get("phone"), {
-        title: fd.get("title"),
-        city: fd.get("city"),
-        salaryMin: fd.get("salaryMin"),
-        salaryMax: fd.get("salaryMax"),
-        openings: fd.get("openings")
+  function wireFlowForms() {
+    var searchForm = document.getElementById("searchForm");
+    if (searchForm) {
+      searchForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var fd = new FormData(searchForm);
+        S.submitSearch(fd.get("role"), fd.get("city"));
+        render();
       });
-      location.hash = "#/dashboard";
-      render();
-    });
+    }
+
+    var loginForm = document.getElementById("loginForm");
+    if (loginForm) {
+      loginForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var fd = new FormData(loginForm);
+        S.verifyLogin(fd.get("phone"));
+        render();
+      });
+    }
+
+    var postingForm = document.getElementById("postingForm");
+    if (postingForm) {
+      postingForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var fd = new FormData(postingForm);
+        var st = S.get();
+        S.confirmJobPosting({
+          title: st.searchRole,
+          city: st.searchCity,
+          experience: fd.get("experience"),
+          education: fd.get("education"),
+          gender: fd.get("gender"),
+          english: fd.get("english"),
+          salaryMin: fd.get("salaryMin"),
+          salaryMax: fd.get("salaryMax"),
+          openings: fd.get("openings")
+        });
+        window.__draftCompany = fd.get("company");
+        render();
+      });
+    }
   }
 
   function wireViewActions() {
@@ -144,6 +172,19 @@
       case "toggle-transcript":
         var panel = document.getElementById("transcript-" + id);
         if (panel) panel.style.display = panel.style.display === "none" ? "block" : "none";
+        break;
+      case "goto-pricing":
+        S.setFlowStep("pricing");
+        render();
+        break;
+      case "goto-login":
+        S.setFlowStep("login");
+        render();
+        break;
+      case "start-trial":
+        S.startTrial(window.__draftCompany || "Your Company");
+        location.hash = "#/dashboard";
+        render();
         break;
     }
   }

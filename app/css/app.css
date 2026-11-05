@@ -229,3 +229,14 @@ a { color: var(--primary); }
 .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
 .ticker-chip { flex: 0 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; font-size: 12.5px; font-weight: 600; color: var(--ink); white-space: nowrap; }
 @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ============ Guided acquisition flow (search > count > pricing > login > posting > hotleads) ============ */
+.flow-step { padding-top: 10px; }
+.flow-progress { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 18px; }
+.count-hero { text-align: center; margin: 10px 0 22px; }
+.count-num { font-size: 44px; font-weight: 800; color: var(--primary); line-height: 1; }
+.count-label { font-size: 14px; color: var(--muted); margin-top: 8px; }
+.price-hero { text-align: center; margin: 10px 0 22px; }
+.price-rupee { font-size: 52px; font-weight: 800; color: var(--primary); line-height: 1; }
+.price-label { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.ai-badge-row { font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-light); border-radius: 8px; padding: 9px 12px; margin-bottom: 16px; }

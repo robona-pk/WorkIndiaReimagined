@@ -22,81 +22,137 @@
     return cats.map(function (c) { return '<span class="ticker-chip">' + c + '</span>'; }).join("");
   }
 
-  // ---------------- Landing (context first) ----------------
-  function renderLanding() {
+  // ---------------- Step 1: job search ----------------
+  function renderJobSearch() {
     return (
-      '<div class="land-wrap">' +
-        '<div class="land-hero">' +
-          '<span class="land-kicker">WorkIndia &middot; Employer trial, reimagined</span>' +
-          '<h1>What this prototype is</h1>' +
-          '<p class="land-sub">This is a working mockup of a redesigned employer trial for WorkIndia (blue/grey-collar hiring: delivery, drivers, warehouse, field staff). It is not live on workindia.in &mdash; it is a front-end-only demo built to show a different way of running the free trial.</p>' +
+      '<div class="onb-wrap flow-step">' +
+        '<div class="flow-progress">Step 1 of 6 &middot; Find your candidates</div>' +
+        '<div class="onb-logo">W</div>' +
+        '<h1 class="onb-title">Who are you hiring?</h1>' +
+        '<p class="onb-sub">Tell us the role and the city &mdash; we\'ll show you how many candidates are available before you commit to anything.</p>' +
+        '<form id="searchForm" class="card">' +
+          '<div class="field"><label>Job title</label><input name="role" list="roleList" type="text" placeholder="e.g. Delivery Executive" value="Delivery Executive" required>' +
+            '<datalist id="roleList">' + D.ROLE_SUGGESTIONS.map(function (r) { return '<option value="' + r + '">'; }).join("") + '</datalist>' +
+          '</div>' +
+          '<div class="field"><label>City</label><input name="city" list="cityList" type="text" placeholder="e.g. Mumbai" value="Mumbai" required>' +
+            '<datalist id="cityList">' + D.CITY_SUGGESTIONS.map(function (c) { return '<option value="' + c + '">'; }).join("") + '</datalist>' +
+          '</div>' +
+          '<button type="submit" class="btn primary full">Search candidates</button>' +
+        '</form>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- Step 2: candidate count ----------------
+  function renderCandidateCount() {
+    var st = S.get();
+    var count = D.estimateCandidateCount(st.searchRole, st.searchCity);
+    return (
+      '<div class="onb-wrap flow-step">' +
+        '<div class="flow-progress">Step 2 of 6 &middot; Candidates available</div>' +
+        '<div class="count-hero">' +
+          '<div class="count-num">' + count.toLocaleString("en-IN") + '</div>' +
+          '<p class="count-label">candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b></p>' +
         '</div>' +
-
-        '<div class="ticker-wrap"><div class="ticker-label">Built for businesses hiring like these</div><div class="ticker-track">' +
-          tickerItems() + tickerItems() +
-        '</div></div>' +
-
-        '<div class="trust-strip">' +
-          '<div class="trust-item"><span class="ic">&#9989;</span><span>Candidates verified by AI call before you see them</span></div>' +
-          '<div class="trust-item"><span class="ic">&#128274;</span><span>Calls stay inside the platform &mdash; your number is never shared</span></div>' +
-          '<div class="trust-item"><span class="ic">&#8377;</span><span>One flat fee, no commission on salary &mdash; not a staffing consultancy</span></div>' +
-          '<div class="trust-item"><span class="ic">&#128222;</span><span>Support team reachable by call &amp; WhatsApp, no English required</span></div>' +
-        '</div>' +
-
-        '<div class="land-section">' +
-          '<h2>What a good hiring platform promises</h2>' +
-          '<ul class="land-list">' +
-            '<li><strong>Speed to first signal.</strong> You should hear from a real, relevant candidate quickly &mdash; not just see a count of how many exist.</li>' +
-            '<li><strong>Verified before you see them.</strong> A profile should already be checked for fit, not a raw listing you have to vet yourself.</li>' +
-            '<li><strong>Simple to post, simple to judge.</strong> A short posting flow, and a clear way to say yes/no on each candidate &mdash; no ambiguity about what to do next.</li>' +
-          '</ul>' +
-        '</div>' +
-
-        '<div class="land-section">' +
-          '<h2>How this redesign delivers on that</h2>' +
-          '<ul class="land-list">' +
-            '<li><strong>AI voice pre-screen before you ever see a profile.</strong> Availability, pay expectation, location and language are confirmed by an AI call first &mdash; what you see is a verified card, not a raw resume.</li>' +
-            '<li><strong>Mark Relevant to unlock contact.</strong> No swipe-and-hope &mdash; pure profile swiping was tried before and failed because employers couldn\'t judge fit without a call.</li>' +
-            '<li><strong>A fixed, rationed batch of candidates</strong> (30 total, 10 at a time) instead of unlimited browsing against a database you can\'t act on.</li>' +
-            '<li><strong>Calling happens inside the platform only, masked</strong> &mdash; Uber-style &mdash; and a call only counts once it actually connects.</li>' +
-            '<li><strong>The trial ends on outcome, not just time:</strong> 3 candidates shortlisted, or the 30-profile allocation used up, or 7 days &mdash; whichever comes first.</li>' +
-            '<li><strong>A post-hire feedback loop</strong> that doesn\'t exist today &mdash; once a hire is confirmed, the employer is asked to rate it.</li>' +
-            '<li><strong>The ₹2,948/month autopay mandate is unchanged</strong> &mdash; this redesign doesn\'t touch that. It just shows the employer evidence of what the trial delivered at that moment, instead of a silent charge.</li>' +
-          '</ul>' +
-        '</div>' +
-
-        '<div class="land-cta">' +
-          '<button class="btn primary" data-action="go-onboarding">See it as an employer &rarr;</button>' +
-          '<span class="hint">You\'ll post one job and walk through the whole trial, start to finish.</span>' +
+        '<div class="card">' +
+          '<p class="section-sub" style="margin-bottom:16px;">That\'s how many exist. What matters is how many are actually available, nearby and a fit &mdash; which is what the trial screens for before you ever see a profile.</p>' +
+          '<button class="btn primary full" data-action="goto-pricing">Continue &rarr;</button>' +
         '</div>' +
       '</div>'
     );
   }
 
-  // ---------------- Onboarding ----------------
-  function renderOnboarding() {
+  // ---------------- Step 3: pricing teaser ----------------
+  function renderPricingTeaser() {
     return (
-      '<div class="onb-wrap">' +
-        '<button class="onb-back" data-action="go-landing">&larr; Back to overview</button>' +
+      '<div class="onb-wrap flow-step">' +
+        '<div class="flow-progress">Step 3 of 6 &middot; Start your trial</div>' +
+        '<div class="price-hero">' +
+          '<div class="price-rupee">&#8377;' + D.PLANS.trialDueToday + '</div>' +
+          '<p class="price-label">to start hiring today</p>' +
+        '</div>' +
+        '<div class="card">' +
+          '<ul class="land-list" style="margin-bottom:18px;">' +
+            '<li>AI calls and screens candidates by voice before you see them</li>' +
+            '<li>Review up to 30 verified profiles, in batches of 10</li>' +
+            '<li>Call candidates through the platform &mdash; your number stays private</li>' +
+            '<li>Trial ends once you shortlist 3, review all 30, or after 7 days</li>' +
+          '</ul>' +
+          '<div class="flat-fee-note" style="margin-bottom:16px;">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
+          '<button class="btn primary full" data-action="goto-login">Start Hiring @ &#8377;' + D.PLANS.trialDueToday + ' &rarr;</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- Step 4: login ----------------
+  function renderLoginStep() {
+    return (
+      '<div class="onb-wrap flow-step">' +
+        '<div class="flow-progress">Step 4 of 6 &middot; Verify your number</div>' +
         '<div class="onb-logo">W</div>' +
-        '<h1 class="onb-title">Post your first job</h1>' +
-        '<p class="onb-sub">One screen. Phone verifies in the background while you describe the role &mdash; no six-step queue.</p>' +
-        '<div class="flat-fee-note">One flat fee if you continue after the trial. No commission on salary, ever.</div>' +
-        '<form id="onboardForm" class="card">' +
-          '<div class="field"><label>Phone number</label><input name="phone" type="tel" placeholder="98765 43210" value="9353248620" required></div>' +
-          '<div class="field"><label>Company name</label><input name="company" type="text" placeholder="e.g. Kapoor Logistics" value="Kapoor Logistics" required></div>' +
-          '<div class="row">' +
-            '<div class="field" style="flex:1"><label>Job title</label><input name="title" type="text" value="Delivery Executive" required></div>' +
-            '<div class="field" style="flex:1"><label>City</label><input name="city" type="text" value="Mumbai" required></div>' +
-          '</div>' +
-          '<div class="row">' +
-            '<div class="field" style="flex:1"><label>Salary min (&#8377;/month)</label><input name="salaryMin" type="number" value="15000" required></div>' +
-            '<div class="field" style="flex:1"><label>Salary max (&#8377;/month)</label><input name="salaryMax" type="number" value="20000" required></div>' +
-          '</div>' +
-          '<div class="field"><label>Openings</label><input name="openings" type="number" value="2" required></div>' +
-          '<button type="submit" class="btn primary full">Post job &amp; start &#8377;1 trial</button>' +
-          '<p class="hint" style="text-align:center;margin-top:10px;">AI will screen candidates by voice before you see them &mdash; no OTP screen, no email, no employee-count dropdown in your way.</p>' +
+        '<h1 class="onb-title">Verify your mobile number</h1>' +
+        '<p class="onb-sub">We\'ll use this to send candidate updates &mdash; no email signup, no password.</p>' +
+        '<form id="loginForm" class="card">' +
+          '<div class="field"><label>Mobile number</label><input name="phone" type="tel" placeholder="98765 43210" value="9353248620" maxlength="10" required></div>' +
+          '<div class="field"><label>OTP</label><input name="otp" type="text" placeholder="Auto-filled for this demo" value="1234" required></div>' +
+          '<button type="submit" class="btn primary full">Verify &amp; continue</button>' +
         '</form>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- Step 5: AI job posting ----------------
+  function renderJobPostingAI() {
+    var st = S.get();
+    var spec = D.suggestJobSpec(st.searchRole);
+    return (
+      '<div class="onb-wrap flow-step">' +
+        '<div class="flow-progress">Step 5 of 6 &middot; AI-generated job post</div>' +
+        '<h1 class="onb-title">We\'ve drafted your job post</h1>' +
+        '<p class="onb-sub">From just the role and city, here\'s what AI filled in. Edit anything before it goes live.</p>' +
+        '<form id="postingForm" class="card">' +
+          '<div class="ai-badge-row">&#10024; AI-generated from "' + esc(st.searchRole) + '" in ' + esc(st.searchCity) + '"</div>' +
+          '<div class="row">' +
+            '<div class="field" style="flex:1"><label>Experience</label><input name="experience" type="text" value="' + spec.experience + '"></div>' +
+            '<div class="field" style="flex:1"><label>Education</label><input name="education" type="text" value="' + spec.education + '"></div>' +
+          '</div>' +
+          '<div class="row">' +
+            '<div class="field" style="flex:1"><label>Gender preference</label><input name="gender" type="text" value="' + spec.gender + '"></div>' +
+            '<div class="field" style="flex:1"><label>English required</label><input name="english" type="text" value="' + spec.english + '"></div>' +
+          '</div>' +
+          '<div class="row">' +
+            '<div class="field" style="flex:1"><label>Salary min (&#8377;/month)</label><input name="salaryMin" type="number" value="' + spec.salaryMin + '"></div>' +
+            '<div class="field" style="flex:1"><label>Salary max (&#8377;/month)</label><input name="salaryMax" type="number" value="' + spec.salaryMax + '"></div>' +
+          '</div>' +
+          '<div class="row">' +
+            '<div class="field" style="flex:1"><label>Openings</label><input name="openings" type="number" value="2" required></div>' +
+            '<div class="field" style="flex:1"><label>Company name</label><input name="company" type="text" placeholder="e.g. Kapoor Logistics" value="Kapoor Logistics" required></div>' +
+          '</div>' +
+          '<button type="submit" class="btn primary full">Post job &amp; see hot leads &rarr;</button>' +
+        '</form>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- Step 6: hot leads preview ----------------
+  function renderHotLeadsStep() {
+    var leads = D.CANDIDATE_POOL.slice(0, 3);
+    return (
+      '<div class="onb-wrap flow-step" style="max-width:560px;">' +
+        '<div class="flow-progress">Step 6 of 6 &middot; Your hot leads</div>' +
+        '<h1 class="onb-title">AI already called 3 candidates for you</h1>' +
+        '<p class="onb-sub">Listen to how the screening call went before you commit to a full batch.</p>' +
+        leads.map(function (c) {
+          return '<div class="cand-card done" style="margin-bottom:14px;">' +
+            '<div class="cand-top">' +
+              '<div><div class="cand-name">' + esc(c.name) + '</div><div class="cand-meta">' + c.age + 'y &middot; ' + c.area + ' (' + c.distanceKm + ' km) &middot; ' + c.experienceYears + ' yrs exp</div></div>' +
+              '<span class="badge-ai">&#10024; Hot lead</span>' +
+            '</div>' +
+            renderCallRecording(c) +
+          '</div>';
+        }).join("") +
+        '<button class="btn primary full" data-action="start-trial">Start my trial &amp; review all candidates &rarr;</button>' +
       '</div>'
     );
   }
@@ -415,8 +471,12 @@
   }
 
   global.WI_VIEWS = {
-    landing: renderLanding,
-    onboarding: renderOnboarding,
+    search: renderJobSearch,
+    count: renderCandidateCount,
+    pricing: renderPricingTeaser,
+    login: renderLoginStep,
+    posting: renderJobPostingAI,
+    hotleads: renderHotLeadsStep,
     dashboard: renderDashboard,
     candidates: renderCandidates,
     calls: renderCalls,

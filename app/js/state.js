@@ -11,6 +11,10 @@
   function defaultState() {
     return {
       onboarded: false,
+      flowStep: "search",        // "search" | "count" | "pricing" | "login" | "posting" | "hotleads"
+      searchRole: null,
+      searchCity: null,
+      draftJob: null,            // AI-suggested job spec, built on the posting step
       company: null,
       phone: null,
       job: null,                 // { title, city, area, salaryMin, salaryMax, openings }
@@ -59,6 +63,34 @@
     resetAll: function () {
       state = defaultState();
       save(state);
+    },
+
+    setFlowStep: function (step) {
+      state.flowStep = step;
+      save(state);
+    },
+
+    submitSearch: function (role, city) {
+      state.searchRole = role;
+      state.searchCity = city;
+      state.flowStep = "count";
+      save(state);
+    },
+
+    verifyLogin: function (phone) {
+      state.phone = phone;
+      state.flowStep = "posting";
+      save(state);
+    },
+
+    confirmJobPosting: function (jobDraft) {
+      state.draftJob = jobDraft;
+      state.flowStep = "hotleads";
+      save(state);
+    },
+
+    startTrial: function (company) {
+      Actions.postJob(company, state.phone, state.draftJob);
     },
 
     postJob: function (company, phone, job) {
