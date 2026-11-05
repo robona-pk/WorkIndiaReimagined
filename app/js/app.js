@@ -81,6 +81,7 @@
     document.querySelectorAll(".sb-link").forEach(function (a) {
       a.classList.toggle("active", a.getAttribute("data-route") === route);
     });
+    document.getElementById("viewRoot").classList.toggle("view-wide", route === "billing");
     document.getElementById("viewRoot").innerHTML = V[route]();
     renderShellChrome();
     wireViewActions();
@@ -382,6 +383,10 @@
         break;
       case "set-billing-tab":
         S.setBillingTab(id);
+        render();
+        break;
+      case "request-sales-help":
+        S.requestSalesHelp();
         render();
         break;
     }

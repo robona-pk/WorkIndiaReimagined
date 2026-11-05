@@ -46,7 +46,8 @@
       paymentTierId: null,       // mock payment flow — set while the "Buy Now" modal is open
       paymentGroup: null,
       paymentStep: null,         // "method" | "processing" | "success"
-      paymentMethod: null        // "upi" | "card" | "netbanking"
+      paymentMethod: null,       // "upi" | "card" | "netbanking"
+      salesHelpRequested: false // true once the Billing page's "talk to our team" prompt was used
     };
   }
 
@@ -189,6 +190,13 @@
 
     setBillingTab: function (tab) {
       state.billingTab = (tab === "multi") ? "multi" : "single";
+      save(state);
+    },
+
+    requestSalesHelp: function () {
+      if (state.salesHelpRequested) return;
+      state.salesHelpRequested = true;
+      pushUpdate("Got it — a WorkIndia specialist will call you shortly to help pick the right plan.");
       save(state);
     },
 

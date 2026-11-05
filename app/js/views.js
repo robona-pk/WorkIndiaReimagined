@@ -720,19 +720,45 @@
       '</div>';
     }
 
-    var trustBlock = '<div class="card trust-card">' +
-      '<p class="section-title">Why employers trust WorkIndia</p>' +
-      '<div class="trust-grid">' +
-        trustItem("&#128274;", "Your number stays private", "Every call runs through the platform &mdash; candidates never see your personal number.") +
-        trustItem("&#127911;", "Every call is recorded", "Play back any screening or recruiter call, any time, for your own records.") +
-        trustItem("&#8377;", "No commission, ever", "One flat fee whatever the salary &mdash; not a staffing consultancy cut.") +
-        trustItem("&#10060;", "Cancel anytime", "No lock-in beyond the plan you choose &mdash; cancel a trial within 3 days at no cost.") +
+    var EMP_CHIPS = [
+      ["zomato", "#E23744"], ["DMart", "#1B6E3C"], ["Flipkart", "#047BFF"], ["rapido", "#F7B500"],
+      ["Justdial", "#C3002F"], ["Cars24", "#EA580C"], ["Uni Cards", "#1757D6"], ["ShopForChange", "#1F7A4D"]
+    ];
+    var chipsHtml = EMP_CHIPS.map(function (c) { return '<span class="emp-chip" style="--b:' + c[1] + ';">' + c[0] + '</span>'; }).join("");
+    var tickerBlock = '<div class="card billing-ticker">' +
+      '<div class="billing-ticker-label">Hiring teams who&rsquo;ve found staff through WorkIndia</div>' +
+      '<div class="ticker-mask"><div class="ticker-track">' + chipsHtml + chipsHtml + '</div></div>' +
+    '</div>';
+
+    var sidebar = '<div class="billing-sidebar">' +
+      '<div class="side-card">' +
+        '<div class="side-card-title">Why employers trust WorkIndia</div>' +
+        '<div class="trust-list">' +
+          trustItem("&#128274;", "Number stays private", "Calls run through the platform, never your personal number.") +
+          trustItem("&#127911;", "Every call recorded", "Play back any screening call, any time.") +
+          trustItem("&#8377;", "No commission, ever", "One flat fee whatever the salary.") +
+          trustItem("&#10060;", "Cancel anytime", "No lock-in beyond the plan you pick.") +
+        '</div>' +
+      '</div>' +
+      '<div class="side-card">' +
+        '<div class="side-card-title">Common questions</div>' +
+        faqItem("What happens after the trial?", "You keep everything you've already unlocked &mdash; new unlocks need a plan.") +
+        faqItem("Will my number ever be shared?", "No &mdash; every call runs through the platform.") +
+        faqItem("Can I switch plans later?", "Yes, upgrade or add jobs anytime, no lock-in.") +
+      '</div>' +
+      '<div class="side-card">' +
+        '<div class="side-card-title">Not sure which plan fits?</div>' +
+        (st.salesHelpRequested
+          ? '<div class="sales-help-done">&#10003; We\'ll be in touch shortly.</div>'
+          : ('<div class="sales-help-sub">Tell us how you hire and we\'ll point you to the right one.</div>' +
+             '<button class="btn ghost full" data-action="request-sales-help">Talk to our team</button>')) +
       '</div>' +
     '</div>';
 
     return (
       '<div>' +
         jobStrip +
+        tickerBlock +
         '<div class="evidence-box">' +
           '<p class="section-title" style="margin-bottom:10px;">' + heroText + '</p>' +
           '<div class="evidence-row"><span>Profiles reviewed</span><span class="v">' + reviewed + ' / ' + D.TOTAL_ALLOCATION + '</span></div>' +
@@ -740,8 +766,10 @@
           '<div class="evidence-row"><span>Candidates shortlisted</span><span class="v">' + shortlisted + ' / ' + D.SHORTLIST_TARGET + '</span></div>' +
           '<div class="evidence-row"><span>Days used</span><span class="v">' + st.day + ' / ' + D.TRIAL_DAY_CAP + '</span></div>' +
         '</div>' +
-        plansBlock +
-        trustBlock +
+        '<div class="billing-layout">' +
+          plansBlock +
+          sidebar +
+        '</div>' +
         hireBlock +
         (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
@@ -754,20 +782,20 @@
     return '<div class="trust-item"><div class="trust-icon">' + icon + '</div><div><div class="trust-item-title">' + title + '</div><div class="trust-item-sub">' + sub + '</div></div></div>';
   }
 
-  // One pricing tier card, matching the real plans page's feature lines
-  // (reach, active jobs, unlock count, boosts, validity, one-click live).
+  function faqItem(q, a) {
+    return '<div class="faq-item"><div class="faq-q">' + q + '</div><div class="faq-a">' + a + '</div></div>';
+  }
+
+  // One pricing tier card. Deliberately short: a "best for" purpose tag
+  // tells a recruiter which plan fits their hiring pattern at a glance,
+  // and only the 2-3 numbers that actually differ between tiers are
+  // spelled out — no repeated boilerplate line across all four cards.
   function renderPlanTier(tier, group) {
     var isTrial = tier.id === "trial";
-    var reachLine = tier.reach === "limited"
-      ? "Limited reach &mdash; fewer candidate calls &amp; applies"
-      : "High reach &mdash; more relevant calls &amp; applies for &ldquo;Faster Hiring&rdquo;";
-    var feats = [reachLine];
-    feats.push("Keep only " + pad2(tier.jobsActive) + " job" + (tier.jobsActive > 1 ? "s" : "") + " active");
-    feats.push("Unlock " + tier.unlocks.toLocaleString("en-IN") + " candidate profiles from database");
-    if (tier.boosts > 0) feats.push("Boost job" + (tier.jobsActive > 1 ? "s" : "") + " up to " + tier.boosts + " times");
-    feats.push("Post unlimited jobs and get unlimited responses");
-    feats.push("Valid for " + tier.validDays + " days");
-    feats.push("Make job live &amp; unlock candidates in one click");
+    var feats = [];
+    feats.push(tier.unlocks.toLocaleString("en-IN") + " candidate unlocks");
+    if (tier.boosts > 0) feats.push(tier.boosts + " job boosts");
+    feats.push("Valid " + tier.validDays + " days");
 
     var priceBlock = isTrial
       ? ('<div class="plan-price">' + tier.priceLabel + '</div><div class="plan-price-sub">' + tier.priceSub + '</div>')
@@ -779,6 +807,7 @@
         (tier.popular ? '<div class="plan-ribbon">&#9733; Most Popular</div>' : '') +
         (tier.badge ? '<div class="plan-badge">' + tier.badge + '</div>' : '') +
         '<div class="plan-name">' + esc(tier.name) + '</div>' +
+        (tier.purpose ? '<div class="plan-purpose">&#127919; Best for: ' + esc(tier.purpose) + '</div>' : '') +
         priceBlock +
         '<button class="btn ' + (tier.popular ? "primary" : "ghost") + ' full" style="margin:12px 0 14px;" data-action="subscribe-tier" data-id="' + tier.id + '" data-group="' + group + '">' + (isTrial ? "Start Trial Now" : "Buy Now") + '</button>' +
         feats.map(function (f) { return '<div class="plan-feat">&#10003; ' + f + '</div>'; }).join("") +

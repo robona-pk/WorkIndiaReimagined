@@ -93,6 +93,7 @@ a { color: var(--primary); }
 }
 .view { flex: 1; padding: 28px; max-width: 980px; }
 .view-narrow { max-width: 560px; }
+.view-wide { max-width: 1260px; }
 
 /* ============ shared bits ============ */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
@@ -262,22 +263,55 @@ a { color: var(--primary); }
   padding: 3px 9px; border-radius: 999px; margin-bottom: 8px;
 }
 .plan-name { font-weight: 700; font-size: 13.5px; }
-.plan-price { font-size: 22px; font-weight: 800; margin: 6px 0 2px; }
+.plan-purpose {
+  display: inline-block; font-size: 10.5px; font-weight: 700; color: var(--primary-dark); background: var(--primary-light);
+  padding: 3px 9px; border-radius: 999px; margin: 7px 0 0;
+}
+.plan-price { font-size: 22px; font-weight: 800; margin: 10px 0 2px; }
 .plan-price-unit { font-size: 12px; color: var(--muted); font-weight: 500; }
 .plan-price-sub { font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
 .plan-feat { font-size: 12px; color: var(--muted); margin: 5px 0; }
 .plan-note { font-size: 11px; color: var(--primary-dark); font-weight: 700; margin-top: 10px; }
 .plan-cancel-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
 
-.trust-card { margin-top: 18px; }
-.trust-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 14px; }
-.trust-item { display: flex; gap: 11px; align-items: flex-start; }
+/* Billing page: employer-logo ticker (ported from the landing page) */
+.billing-ticker { padding: 16px 20px 18px; }
+.billing-ticker-label { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .01em; margin-bottom: 12px; }
+.ticker-mask { position: relative; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.ticker-mask .ticker-track { display: flex; align-items: center; gap: 14px; width: max-content; animation: emp-scroll 26s linear infinite; }
+.ticker-mask:hover .ticker-track { animation-play-state: paused; }
+.emp-chip { flex: 0 0 auto; font-weight: 800; font-size: 15px; letter-spacing: -.01em; color: var(--b, var(--primary)); background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 18px; white-space: nowrap; }
+@keyframes emp-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Billing page: two-column layout — plans on the left, a sidebar on the
+   right so wide screens don't leave a dead empty margin. */
+.billing-layout { display: grid; grid-template-columns: 1fr 268px; gap: 20px; align-items: start; }
+.billing-sidebar { display: flex; flex-direction: column; gap: 14px; }
+.side-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.side-card-title { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+
+.trust-list { display: flex; flex-direction: column; gap: 12px; }
+.trust-item { display: flex; gap: 10px; align-items: flex-start; }
 .trust-icon {
-  flex: 0 0 auto; width: 32px; height: 32px; border-radius: 9px; background: var(--primary-light);
-  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  flex: 0 0 auto; width: 28px; height: 28px; border-radius: 8px; background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center; font-size: 13px;
 }
-.trust-item-title { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
-.trust-item-sub { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.trust-item-title { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 1px; }
+.trust-item-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+.faq-item { margin-bottom: 11px; }
+.faq-item:last-child { margin-bottom: 0; }
+.faq-q { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.faq-a { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+
+.sales-help-sub { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-bottom: 10px; }
+.sales-help-done { font-size: 12px; color: #15803D; font-weight: 700; }
+
+@media (max-width: 1180px) {
+  .billing-layout { grid-template-columns: 1fr; }
+  .billing-sidebar { flex-direction: row; flex-wrap: wrap; }
+  .billing-sidebar .side-card { flex: 1 1 260px; }
+}
 
 /* ============ updates feed (whatsapp-style) ============ */
 .wa-phone { max-width: 390px; margin: 0 auto; background: #0B141A; border-radius: 28px; padding: 10px; }

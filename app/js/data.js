@@ -300,11 +300,12 @@
           priceLabel: "Just ₹1", priceSub: "then ₹2,499/m, cancel trial anytime.",
           reach: "limited", jobsActive: 1, unlocks: 5, boosts: 0, validDays: 3,
           note: "3-Day Trial then renews to 1 month plan",
-          cancelNote: "Cancel your trial anytime within 3 days at no cost."
+          cancelNote: "Cancel your trial anytime within 3 days at no cost.",
+          purpose: "Try it out, no commitment"
         },
-        { id: "1m", name: "1 Month", perMonth: 2499, payUpfront: 2499, reach: "high", jobsActive: 1, unlocks: 100, boosts: 3, validDays: 30, note: null },
-        { id: "3m", name: "3 Months Plan", perMonth: 1666, payUpfront: 4999, reach: "high", jobsActive: 1, unlocks: 300, boosts: 9, validDays: 90, note: "Get 5 extra days" },
-        { id: "12m", name: "1 Year Plan", perMonth: 916, payUpfront: 11000, reach: "high", jobsActive: 1, unlocks: 800, boosts: 24, validDays: 365, note: "Get 7 extra days", popular: true }
+        { id: "1m", name: "1 Month", perMonth: 2499, payUpfront: 2499, reach: "high", jobsActive: 1, unlocks: 100, boosts: 3, validDays: 30, note: null, purpose: "One urgent, one-off hire" },
+        { id: "3m", name: "3 Months Plan", perMonth: 1666, payUpfront: 4999, reach: "high", jobsActive: 1, unlocks: 300, boosts: 9, validDays: 90, note: "Get 5 extra days", purpose: "Hiring in bulk this quarter" },
+        { id: "12m", name: "1 Year Plan", perMonth: 916, payUpfront: 11000, reach: "high", jobsActive: 1, unlocks: 800, boosts: 24, validDays: 365, note: "Get 7 extra days", popular: true, purpose: "Seasonal or year-round hiring" }
       ]
     },
     multiHire: {
@@ -312,9 +313,9 @@
       saveBadge: "Save 52%",
       tagline: "Hire for Many Roles together.",
       tiers: [
-        { id: "1m", name: "1 Month Plan", perMonth: 4999, payUpfront: null, reach: "high", jobsActive: 3, unlocks: 400, boosts: 10, validDays: 30, note: null, popular: true },
-        { id: "3m", name: "3 Months Plan", perMonth: 3066, payUpfront: 9200, reach: "high", jobsActive: 3, unlocks: 900, boosts: 27, validDays: 90, note: null },
-        { id: "12m", name: "1 Year Plan", perMonth: 1750, payUpfront: 21000, reach: "high", jobsActive: 3, unlocks: 2400, boosts: 72, validDays: 365, note: null }
+        { id: "1m", name: "1 Month Plan", perMonth: 4999, payUpfront: null, reach: "high", jobsActive: 3, unlocks: 400, boosts: 10, validDays: 30, note: null, popular: true, purpose: "A quick hiring sprint, many roles" },
+        { id: "3m", name: "3 Months Plan", perMonth: 3066, payUpfront: 9200, reach: "high", jobsActive: 3, unlocks: 900, boosts: 27, validDays: 90, note: null, purpose: "Hiring in bulk this quarter" },
+        { id: "12m", name: "1 Year Plan", perMonth: 1750, payUpfront: 21000, reach: "high", jobsActive: 3, unlocks: 2400, boosts: 72, validDays: 365, note: null, purpose: "Seasonal or ongoing hiring, all year" }
       ]
     }
   };
