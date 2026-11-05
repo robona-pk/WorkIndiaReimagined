@@ -92,13 +92,29 @@
     return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
   }
 
-  // The recruiter-call recordings in the Calls tab use plain <audio>
-  // elements rather than the AI-call simulated-progress machinery, since
-  // there's no transcript-highlight sync to drive here — just play/pause
-  // and an elapsed/duration readout.
+  // The recruiter-call recordings in the Calls tab are the recruiter's own
+  // mic audio, captured live via js/recorder.js while the call was
+  // connected — never a placeholder clip. They use plain <audio> elements
+  // rather than the AI-call simulated-progress machinery, since there's no
+  // transcript-highlight sync to drive here — just play/pause and an
+  // elapsed/duration readout.
+  var rcallObjectUrls = {}; // candidateId -> object URL, so we don't re-fetch from IndexedDB on every render
+
   function wireRecruiterCallAudios() {
     document.querySelectorAll("audio[data-rcall]").forEach(function (audio) {
       var id = audio.getAttribute("data-rcall");
+      if (!audio.src && window.WI_RECORDER) {
+        if (rcallObjectUrls[id]) {
+          audio.src = rcallObjectUrls[id];
+        } else {
+          window.WI_RECORDER.getRecording(id).then(function (blob) {
+            if (!blob) return;
+            var url = URL.createObjectURL(blob);
+            rcallObjectUrls[id] = url;
+            audio.src = url;
+          });
+        }
+      }
       audio.onplay = function () {
         document.querySelectorAll("audio[data-rcall]").forEach(function (a) { if (a !== audio) a.pause(); });
         var btn = document.getElementById("rcallBtn-" + id);
@@ -338,6 +354,14 @@
     st.callPhase = "connecting";
     st.callSeconds = 0;
     render();
+    // Start capturing the recruiter's mic now, during "Connecting…", so
+    // the browser's permission prompt (if any) is out of the way before
+    // the call is marked connected and the recruiter starts talking.
+    if (window.WI_RECORDER) {
+      window.WI_RECORDER.startCapture().then(function (started) {
+        if (!started) S.setMicPermissionDenied(true);
+      });
+    }
     setTimeout(function () {
       var s = S.get();
       if (s.callOverlayFor !== id) return;
@@ -363,9 +387,17 @@
   function endCall() {
     if (callTimerInterval) clearInterval(callTimerInterval);
     var st = S.get();
-    if (st.callOverlayFor) S.recordCallDuration(st.callOverlayFor, st.callSeconds || 0);
+    var id = st.callOverlayFor;
+    if (id) S.recordCallDuration(id, st.callSeconds || 0);
     st.callPhase = "shortlist";
     render();
+    if (id && window.WI_RECORDER) {
+      window.WI_RECORDER.stopCapture(id).then(function (blob) {
+        S.markLiveRecording(id, !!blob);
+        delete rcallObjectUrls[id]; // force a fresh fetch so the just-saved recording picks up
+        if (currentRoute() === "calls") render(); // re-render so the done-row picks up the new recording flag
+      });
+    }
   }
 
   var recordings = {}; // candId -> { elapsed, interval, duration, transcript }
@@ -470,6 +502,7 @@
 
   function closeCallOverlay() {
     if (callTimerInterval) clearInterval(callTimerInterval);
+    if (window.WI_RECORDER) window.WI_RECORDER.discardCapture(); // call abandoned mid-way — release the mic, don't save
     var st = S.get();
     st.callOverlayFor = null;
     st.callPhase = null;

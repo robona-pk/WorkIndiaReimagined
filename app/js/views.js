@@ -425,10 +425,12 @@
       );
     }
 
-    // A completed call: duration, a play button for the recruiter's own
-    // recorded call with the candidate (separate from the AI screening
-    // call shown on Hot Leads), and a Summary CTA that reveals a one-line
-    // post-call note built from the candidate's data + decision so far.
+    // A completed call: duration, playback of the recruiter's OWN voice —
+    // captured live via the mic while the call was connected (see
+    // js/recorder.js) — and a Summary CTA with a one-line post-call note
+    // built from the candidate's data + decision so far. If mic capture
+    // didn't happen (denied, unsupported, or a call made before this
+    // feature existed), we say so plainly rather than play a stand-in clip.
     function doneRow(id) {
       var c = byId[id];
       var decision = st.shortlistedIds.indexOf(id) !== -1 ? "shortlisted"
@@ -438,6 +440,16 @@
       var durSec = st.callDurations[id];
       if (durSec === undefined) durSec = 60 + (id.charCodeAt(id.length - 1) * 7) % 180; // fallback for pre-existing demo state
       var summary = D.buildRecruiterCallSummary(c, decision);
+      var hasRecording = !!(st.liveCallRecordings && st.liveCallRecordings[id]);
+
+      var callRow = hasRecording
+        ? ('<button type="button" class="cl-mini-play" id="rcallBtn-' + id + '" data-action="toggle-rcall" data-id="' + id + '" aria-label="Play your recorded call">&#9658;</button>' +
+           '<span class="cl-duration" id="rcallTime-' + id + '">00:00 / ' + fmtTime(durSec) + '</span>' +
+           '<span class="cl-call-dur-total">&middot; your voice, recorded live on this call</span>' +
+           '<audio id="rcallAudio-' + id + '" data-rcall="' + id + '" preload="none"></audio>')
+        : ('<span class="cl-no-recording">No recording captured for this call' +
+           (st.micPermissionDenied ? ' &mdash; mic access wasn&rsquo;t granted.' : '.') + '</span>' +
+           '<span class="cl-call-dur-total">&middot; call lasted ' + fmtTime(durSec) + '</span>');
 
       return (
         '<div class="call-list-item call-list-item-done">' +
@@ -445,11 +457,7 @@
             '<div><div class="nm">' + nameLink(c) + '</div><div class="meta">' + c.area + ' &middot; ' + c.experienceYears + ' yrs exp</div></div>' +
             tag +
           '</div>' +
-          '<div class="cl-call-row">' +
-            '<button type="button" class="cl-mini-play" id="rcallBtn-' + id + '" data-action="toggle-rcall" data-id="' + id + '" aria-label="Play recorded call">&#9658;</button>' +
-            '<span class="cl-duration" id="rcallTime-' + id + '">00:00 / ' + fmtTime(c.recruiterCallDurationSec) + '</span>' +
-            '<span class="cl-call-dur-total">&middot; call lasted ' + fmtTime(durSec) + '</span>' +
-            '<audio id="rcallAudio-' + id + '" data-rcall="' + id + '" src="' + c.recruiterCallFile + '" preload="none"></audio>' +
+          '<div class="cl-call-row">' + callRow +
             '<button type="button" class="btn ghost cl-summary-btn" data-action="toggle-summary" data-id="' + id + '">Summary</button>' +
           '</div>' +
           '<div class="cl-summary-box" id="rcallSummary-' + id + '" style="display:none;">' + esc(summary) + '</div>' +
@@ -530,6 +538,11 @@
         '<div style="font-size:17px;font-weight:700;">' + candidate.name + '</div>' +
         '<div style="font-size:13px;color:#9CA3AF;">' + (phase === "connecting" ? "Connecting…" : "Connected") + '</div>' +
         (phase === "connected" ? '<div class="call-timer" id="callTimerDisplay">' + fmtTime(st.callSeconds || 0) + '</div>' : "") +
+        (phase === "connected" && !st.micPermissionDenied
+          ? '<div class="call-rec-indicator"><span class="call-rec-dot"></span>Recording your voice for this call</div>'
+          : (phase === "connected" && st.micPermissionDenied
+            ? '<div class="call-rec-indicator muted">Mic access not granted &mdash; this call won&rsquo;t be recorded</div>'
+            : "")) +
         '<button class="call-end" data-action="end-call" data-id="' + candidate.id + '">' +
           '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a1.003 1.003 0 01.01-1.42C3.34 8.78 7.46 7 12 7s8.66 1.78 11.7 4.66c.2.18.31.43.31.7 0 .27-.11.52-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.4 11.4 0 00-2.66-1.85.99.99 0 01-.56-.9v-3.1A17.4 17.4 0 0012 9z"/></svg>' +
         '</button>' +

@@ -37,7 +37,9 @@
       hireRating: null,
       updatesFeed: [],           // WhatsApp-style message log
       callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
-      profileOpenFor: null       // candidateId whose profile overlay is open, or null
+      profileOpenFor: null,      // candidateId whose profile overlay is open, or null
+      liveCallRecordings: {},    // candidateId -> true once the recruiter's own mic audio was captured for that call
+      micPermissionDenied: false // true once the browser mic prompt has been denied/unsupported, so we stop re-asking
     };
   }
 
@@ -162,6 +164,19 @@
     // instead of nothing.
     recordCallDuration: function (candidateId, seconds) {
       state.callDurations[candidateId] = seconds;
+      save(state);
+    },
+
+    // Marks whether the recruiter's own mic audio was actually captured
+    // for this call (see js/recorder.js). false means no recording exists
+    // — the UI should say so plainly rather than play a stand-in clip.
+    markLiveRecording: function (candidateId, captured) {
+      state.liveCallRecordings[candidateId] = !!captured;
+      save(state);
+    },
+
+    setMicPermissionDenied: function (denied) {
+      state.micPermissionDenied = !!denied;
       save(state);
     },
 
