@@ -25,7 +25,18 @@
     <div class="main-col">
       <header class="topbar">
         <div id="topbarTitle" style="font-weight:700;font-size:15px;">Dashboard</div>
-        <div class="trial-chip" id="trialChip">Trial active</div>
+        <div class="trial-chip-wrap" id="trialChipWrap">
+          <button type="button" class="trial-chip" id="trialChip"><span id="trialChipLabel">Trial active</span></button>
+          <div class="trial-tooltip" id="trialTooltip" role="tooltip">
+            <p class="trial-tooltip-title">How the trial works</p>
+            <ul>
+              <li>We surface fresh candidate leads for your job in batches of 10 — up to 30 in total — so there's always someone new to review.</li>
+              <li>Open a profile, check the details (skills, pay expectation, distance, AI call recording) and judge whether they're a fit.</li>
+              <li>Relevant? Shortlist them to unlock their number and call directly.</li>
+              <li>Your free trial covers unlocking <b>3 relevant candidates</b>. Try to unlock a 4th and you'll be asked to subscribe.</li>
+            </ul>
+          </div>
+        </div>
       </header>
       <main class="view" id="viewRoot"></main>
     </div>

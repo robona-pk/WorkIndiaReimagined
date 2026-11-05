@@ -24,15 +24,26 @@
     return V[h] ? h : "dashboard";
   }
 
+  // The chip used to show "Day X/7 of trial", but day-count and the
+  // real trial-ending condition (3 relevant-candidate unlocks) are two
+  // separate mechanics — a recruiter who has already unlocked 3
+  // candidates but is still on "Day 1/7" reads as broken or confusing.
+  // So while the trial is active we show a plain "How trial works" CTA
+  // and explain the actual construct on hover/tap instead of a number
+  // that doesn't line up with what's about to happen.
   function renderShellChrome() {
     var st = S.get();
+    var wrap = document.getElementById("trialChipWrap");
     var chip = document.getElementById("trialChip");
+    var label = document.getElementById("trialChipLabel");
     if (st.trialEnded) {
-      chip.textContent = st.subscribed ? "Subscribed" : "Trial complete";
+      label.textContent = st.subscribed ? "Subscribed" : "Trial complete";
       chip.className = "trial-chip " + (st.subscribed ? "ok" : "done");
+      wrap.classList.remove("has-tooltip", "tooltip-open");
     } else {
-      chip.textContent = "Day " + st.day + "/" + window.WI_DATA.TRIAL_DAY_CAP + " of trial";
-      chip.className = "trial-chip";
+      label.textContent = "How trial works";
+      chip.className = "trial-chip interactive";
+      wrap.classList.add("has-tooltip");
     }
   }
 
@@ -428,5 +439,19 @@
     if (!location.hash) location.hash = "#/dashboard";
     applyIncomingSearch();
     render();
+
+    // Hover shows the "how trial works" tooltip on desktop; this click
+    // toggle covers touch devices, which have no hover state.
+    var trialWrap = document.getElementById("trialChipWrap");
+    if (trialWrap) {
+      trialWrap.addEventListener("click", function (e) {
+        if (!this.classList.contains("has-tooltip")) return;
+        this.classList.toggle("tooltip-open");
+        e.stopPropagation();
+      });
+      document.addEventListener("click", function () {
+        trialWrap.classList.remove("tooltip-open");
+      });
+    }
   });
 })();
