@@ -1,17 +1,28 @@
 # WorkIndia Reimagined
 
-A real, multi-view prototype of a rethought employer-recruitment app for WorkIndia's hunting (employer acquisition) product — not a slide deck, not a six-step demo. Built from:
+Two things live in this repo:
+
+- **`/` (root)** — the employer acquisition **landing page**: the pre-signup marketing page a first-time employer lands on. "Employer Login" / "Start Hiring" both lead into the app below.
+- **`/app/`** — the **trial prototype**: a real, multi-view rethought employer-recruitment app (not a slide deck, not a six-step demo), covering onboarding, AI-screened candidates, platform-only calling, outcome-based trial end, and a post-hire feedback loop.
+
+## View it
+
+Open `index.html` directly in a browser (it links to `app/index.html`), or enable GitHub Pages on this repo (Settings → Pages → Build and deployment → Source: **GitHub Actions**) for a live URL — the workflow in `.github/workflows/pages.yml` is already wired up and serves both paths.
+
+## Landing page (`/`)
+
+Built per a CRO/UX brief: trust-before-conversion structure (hero with phone-number signup + "Talk to Sales", social proof, trust pillars, 4-step how-it-works, customer stories, category coverage, pricing & refund assurance, FAQ accordion, final CTA, sticky mobile CTA). Verified stats and real testimonials are sourced directly from workindia.in's own published employer page (reused with original names/quotes/companies — not fabricated); no invented numbers, guarantees, or logos.
+
+## Trial app (`/app/`)
+
+Built from:
 
 - analysis of 12,541 employer sales calls
 - a cohort study of 98,505 employers (visit × response × unlock behaviour) showing a 10.3x conversion gap between passive and active trial employers
 - first-week employer interviews (including the "we thought you were a commission-based consultancy" misconception)
 - a live walkthrough of the production employer flow on workindia.in, including one reproduced bug (false "wallet balance low / job rejected" message on a brand-new trial account)
 
-## View it
-
-Open `index.html` directly in a browser, or enable GitHub Pages on this repo (Settings → Pages → Build and deployment → Source: **GitHub Actions**) for a live URL — the workflow in `.github/workflows/pages.yml` is already wired up.
-
-## What's inside
+### What's inside
 
 A real app, not a walkthrough:
 

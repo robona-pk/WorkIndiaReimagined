@@ -40,9 +40,8 @@
     if (!st.onboarded) {
       document.getElementById("appShell").style.display = "none";
       document.getElementById("onboardRoot").style.display = "block";
-      document.getElementById("onboardRoot").innerHTML = window.__showOnboardForm ? V.onboarding() : V.landing();
+      document.getElementById("onboardRoot").innerHTML = V.onboarding();
       wireOnboardForm();
-      wireViewActions();
       return;
     }
 
@@ -136,16 +135,7 @@
       case "reset-demo":
         if (callTimerInterval) clearInterval(callTimerInterval);
         S.resetAll();
-        window.__showOnboardForm = false;
         location.hash = "#/dashboard";
-        render();
-        break;
-      case "go-onboarding":
-        window.__showOnboardForm = true;
-        render();
-        break;
-      case "go-landing":
-        window.__showOnboardForm = false;
         render();
         break;
       case "toggle-recording":

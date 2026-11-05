@@ -51,13 +51,10 @@
       btn.textContent = "Sending OTP…";
       btn.disabled = true;
       setTimeout(function () {
-        btn.textContent = "Check your messages ✓";
+        btn.textContent = "Verified — taking you in ✓";
         setTimeout(function () {
-          btn.textContent = original;
-          btn.disabled = false;
-          phone.style.borderColor = "";
-          phone.value = "";
-        }, 2200);
+          window.location.href = "app/";
+        }, 900);
       }, 900);
     });
   }
