@@ -516,7 +516,7 @@
 
   function renderCallOverlay(candidate) {
     var st = S.get();
-    var phase = st.callPhase || "connecting"; // connecting | connected | shortlist
+    var phase = st.callPhase || "connecting"; // requesting-mic | mic-blocked | connecting | connected | shortlist
     if (phase === "shortlist") {
       return (
         '<div class="call-overlay">' +
@@ -531,6 +531,35 @@
         '</div>'
       );
     }
+
+    // Every platform call is recorded, so mic access is required before the
+    // call can actually be placed — it isn't an optional nicety the call
+    // proceeds without.
+    if (phase === "requesting-mic") {
+      return (
+        '<div class="call-overlay"><div class="call-panel">' +
+          '<div class="call-avatar">' + candidate.name.charAt(0) + '</div>' +
+          '<div style="font-size:17px;font-weight:700;">' + candidate.name + '</div>' +
+          '<div style="font-size:13px;color:#9CA3AF;">Requesting microphone access&hellip;</div>' +
+          '<p class="section-sub" style="max-width:260px;">Allow mic access in the browser prompt to continue &mdash; every platform call is recorded.</p>' +
+          '<button class="btn ghost" data-action="cancel-call">Cancel</button>' +
+        '</div></div>'
+      );
+    }
+    if (phase === "mic-blocked") {
+      return (
+        '<div class="call-overlay"><div class="call-panel">' +
+          '<div class="call-avatar" style="background:var(--danger);">&#128263;</div>' +
+          '<p class="section-title" style="color:#fff;margin:0;">Mic access needed to call</p>' +
+          '<p class="section-sub" style="max-width:280px;">WorkIndia records every call with ' + candidate.name + ' for your reference. Allow microphone access in your browser to place the call.</p>' +
+          '<div class="row">' +
+            '<button class="btn ghost" style="flex:1" data-action="cancel-call">Cancel</button>' +
+            '<button class="btn primary" style="flex:1" data-action="retry-mic-call" data-id="' + candidate.id + '">Try again</button>' +
+          '</div>' +
+        '</div></div>'
+      );
+    }
+
     return (
       '<div class="call-overlay"><div class="call-panel">' +
         '<div class="call-masked">&#128274; Platform call &middot; number masked</div>' +
@@ -538,11 +567,9 @@
         '<div style="font-size:17px;font-weight:700;">' + candidate.name + '</div>' +
         '<div style="font-size:13px;color:#9CA3AF;">' + (phase === "connecting" ? "Connecting…" : "Connected") + '</div>' +
         (phase === "connected" ? '<div class="call-timer" id="callTimerDisplay">' + fmtTime(st.callSeconds || 0) + '</div>' : "") +
-        (phase === "connected" && !st.micPermissionDenied
+        (phase === "connected"
           ? '<div class="call-rec-indicator"><span class="call-rec-dot"></span>Recording your voice for this call</div>'
-          : (phase === "connected" && st.micPermissionDenied
-            ? '<div class="call-rec-indicator muted">Mic access not granted &mdash; this call won&rsquo;t be recorded</div>'
-            : "")) +
+          : "") +
         '<button class="call-end" data-action="end-call" data-id="' + candidate.id + '">' +
           '<svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a1.003 1.003 0 01.01-1.42C3.34 8.78 7.46 7 12 7s8.66 1.78 11.7 4.66c.2.18.31.43.31.7 0 .27-.11.52-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.4 11.4 0 00-2.66-1.85.99.99 0 01-.56-.9v-3.1A17.4 17.4 0 0012 9z"/></svg>' +
         '</button>' +

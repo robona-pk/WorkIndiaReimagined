@@ -268,6 +268,18 @@
       case "open-call":
         openCall(id);
         break;
+      case "retry-mic-call":
+        var retryId = S.get().callOverlayFor || id;
+        var st2 = S.get();
+        st2.callPhase = "requesting-mic";
+        render();
+        requestMicThenConnect(retryId);
+        break;
+      case "cancel-call":
+        if (window.WI_RECORDER) window.WI_RECORDER.discardCapture();
+        closeCallOverlay();
+        render();
+        break;
       case "end-call":
         endCall();
         break;
@@ -348,36 +360,64 @@
     }
   }
 
+  // Every platform call is recorded, so mic access is a precondition for
+  // placing the call at all — not something it quietly proceeds without.
+  // openCall() asks for the mic first; only once that succeeds does the
+  // "Connecting…" / "Connected" flow (and the call-counts-toward-trial
+  // logic in S.connectCall) start.
   function openCall(id) {
     var st = S.get();
     st.callOverlayFor = id;
-    st.callPhase = "connecting";
+    st.callPhase = "requesting-mic";
     st.callSeconds = 0;
     render();
-    // Start capturing the recruiter's mic now, during "Connecting…", so
-    // the browser's permission prompt (if any) is out of the way before
-    // the call is marked connected and the recruiter starts talking.
-    if (window.WI_RECORDER) {
-      window.WI_RECORDER.startCapture().then(function (started) {
-        if (!started) S.setMicPermissionDenied(true);
-      });
+    requestMicThenConnect(id);
+  }
+
+  function requestMicThenConnect(id) {
+    if (!window.WI_RECORDER) {
+      // No mic support in this browser at all — same hard block.
+      var s0 = S.get();
+      if (s0.callOverlayFor !== id) return;
+      S.setMicPermissionDenied(true);
+      s0.callPhase = "mic-blocked";
+      render();
+      return;
     }
-    setTimeout(function () {
+    window.WI_RECORDER.startCapture().then(function (started) {
       var s = S.get();
-      if (s.callOverlayFor !== id) return;
-      s.callPhase = "connected";
+      if (s.callOverlayFor !== id) return; // overlay was cancelled/closed while the permission prompt was up
+      if (started) {
+        S.setMicPermissionDenied(false);
+        beginConnectingFlow(id);
+      } else {
+        S.setMicPermissionDenied(true);
+        s.callPhase = "mic-blocked";
+        render();
+      }
+    });
+  }
+
+  function beginConnectingFlow(id) {
+    var s = S.get();
+    s.callPhase = "connecting";
+    render();
+    setTimeout(function () {
+      var s2 = S.get();
+      if (s2.callOverlayFor !== id) return;
+      s2.callPhase = "connected";
       S.connectCall(id);
       render();
       callTimerInterval = setInterval(function () {
-        var s2 = S.get();
-        if (s2.callOverlayFor !== id || s2.callPhase !== "connected") {
+        var s3 = S.get();
+        if (s3.callOverlayFor !== id || s3.callPhase !== "connected") {
           clearInterval(callTimerInterval);
           return;
         }
-        s2.callSeconds = (s2.callSeconds || 0) + 1;
+        s3.callSeconds = (s3.callSeconds || 0) + 1;
         var disp = document.getElementById("callTimerDisplay");
         if (disp) {
-          var m = Math.floor(s2.callSeconds / 60), ss = s2.callSeconds % 60;
+          var m = Math.floor(s3.callSeconds / 60), ss = s3.callSeconds % 60;
           disp.textContent = (m < 10 ? "0" + m : m) + ":" + (ss < 10 ? "0" + ss : ss);
         }
       }, 1000);
