@@ -47,7 +47,8 @@
       paymentGroup: null,
       paymentStep: null,         // "method" | "processing" | "success"
       paymentMethod: null,       // "upi" | "card" | "netbanking"
-      salesHelpRequested: false // true once the Billing page's "talk to our team" prompt was used
+      salesHelpRequested: false, // true once the Billing page's "talk to our team" prompt was used
+      subscribedAt: null        // ISO timestamp set the moment a plan is actually paid for
     };
   }
 
@@ -217,8 +218,16 @@
       save(state);
     },
 
+    // UPI shows a "scan to pay" QR step first (confirmQrScan moves it on
+    // to processing); every other method goes straight to processing.
     beginPaymentProcessing: function () {
       if (!state.paymentMethod) return;
+      state.paymentStep = (state.paymentMethod === "upi") ? "qr" : "processing";
+      save(state);
+    },
+
+    confirmQrScan: function () {
+      if (state.paymentStep !== "qr") return;
       state.paymentStep = "processing";
       save(state);
     },
@@ -229,6 +238,7 @@
       state.subscribed = true;
       state.subscribedTierId = state.paymentTierId;
       state.subscribedGroup = state.paymentGroup;
+      state.subscribedAt = new Date().toISOString();
       state.paymentStep = "success";
       save(state);
     },
@@ -286,6 +296,7 @@
       state.subscribed = true;
       if (tierId) state.subscribedTierId = tierId;
       if (group) state.subscribedGroup = (group === "multi") ? "multi" : "single";
+      if (!state.subscribedAt) state.subscribedAt = new Date().toISOString();
       save(state);
     },
 

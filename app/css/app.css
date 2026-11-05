@@ -274,6 +274,25 @@ a { color: var(--primary); }
 .plan-note { font-size: 11px; color: var(--primary-dark); font-weight: 700; margin-top: 10px; }
 .plan-cancel-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
 
+.active-plan-card { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.plan-active-badge {
+  display: inline-block; font-size: 10.5px; font-weight: 800; color: #15803D; background: var(--success-light, #DCFCE7);
+  padding: 3px 9px; border-radius: 999px;
+}
+.plan-active-group { font-size: 12px; font-weight: 600; color: var(--muted); }
+.plan-validity { margin-bottom: 18px; }
+.plan-validity-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.plan-validity-bar { height: 8px; border-radius: 999px; background: var(--bg); overflow: hidden; }
+.plan-validity-fill { height: 100%; background: var(--primary); border-radius: 999px; }
+.plan-usage-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.plan-usage-stat { background: var(--bg); border-radius: 10px; padding: 12px 10px; text-align: center; }
+.plan-usage-v { font-size: 18px; font-weight: 800; color: var(--primary-dark); }
+.plan-usage-l { font-size: 10.5px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+
+@media (max-width: 560px) {
+  .plan-usage-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* Billing page: employer-logo ticker (ported from the landing page) */
 .billing-ticker { padding: 16px 20px 18px; }
 .billing-ticker-label { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .01em; margin-bottom: 12px; }
@@ -450,6 +469,14 @@ a { color: var(--primary); }
 .payment-method-radio { width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--border); flex: 0 0 auto; }
 .payment-method-radio.checked { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 3px #fff; }
 .payment-note { font-size: 10.5px; color: var(--muted); text-align: center; margin-top: 12px; }
+.qr-box { display: flex; justify-content: center; margin: 4px 0 10px; }
+.qr-grid {
+  display: grid; grid-template-columns: repeat(11, 1fr); gap: 2px; width: 176px; height: 176px;
+  background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 10px;
+}
+.qr-cell { border-radius: 1px; background: transparent; }
+.qr-cell.on { background: var(--ink); }
+.qr-upi-id { text-align: center; font-size: 12px; font-weight: 700; color: var(--primary-dark); margin-bottom: 10px; }
 .payment-success-check {
   width: 54px; height: 54px; border-radius: 50%; background: var(--success-light); color: var(--success);
   font-size: 26px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto;

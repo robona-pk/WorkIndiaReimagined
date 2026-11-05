@@ -376,6 +376,16 @@
           }, 1600);
         }
         break;
+      case "confirm-qr-scan":
+        S.confirmQrScan();
+        render();
+        if (S.get().paymentStep === "processing") {
+          paymentTimer = setTimeout(function () {
+            S.completePayment();
+            render();
+          }, 1600);
+        }
+        break;
       case "close-payment-modal":
         if (paymentTimer) { clearTimeout(paymentTimer); paymentTimer = null; }
         S.closePaymentModal();

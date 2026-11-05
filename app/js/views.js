@@ -451,6 +451,23 @@
       );
     }
 
+    if (st.paymentStep === "qr") {
+      return (
+        '<div class="call-overlay">' +
+          '<div class="payment-panel">' +
+            '<button class="paywall-close" data-action="close-payment-modal" aria-label="Close">&times;</button>' +
+            '<p class="section-title" style="margin-bottom:2px;">Scan to pay</p>' +
+            '<p class="payment-amount">' + amountLabel + '</p>' +
+            '<div class="qr-box">' + renderFakeQr(tier.id + "|" + st.paymentTierId) + '</div>' +
+            '<p class="qr-upi-id">pay.workindia@upi</p>' +
+            '<p class="section-sub" style="margin-bottom:16px;">Open any UPI app &mdash; Google Pay, PhonePe, Paytm &mdash; and scan this code to pay.</p>' +
+            '<button class="btn primary full" data-action="confirm-qr-scan">I&rsquo;ve scanned &amp; paid</button>' +
+            '<p class="payment-note">&#128274; This is a prototype &mdash; no real payment is made. Click above to simulate a completed scan.</p>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
     var methods = [
       { id: "upi", icon: "&#128241;", label: "UPI", sub: "Google Pay, PhonePe, Paytm &amp; more" },
       { id: "card", icon: "&#128179;", label: "Credit / Debit Card", sub: "Visa, Mastercard, RuPay" },
@@ -471,11 +488,37 @@
               '<span class="payment-method-radio' + (selected ? ' checked' : '') + '"></span>' +
             '</button>';
           }).join("") +
-          '<button class="btn primary full" style="margin-top:16px;" data-action="pay-now"' + (st.paymentMethod ? '' : ' disabled') + '>Pay ' + amountLabel + '</button>' +
+          '<button class="btn primary full" style="margin-top:16px;" data-action="pay-now"' + (st.paymentMethod ? '' : ' disabled') + '>' +
+            (st.paymentMethod === "upi" ? "Generate QR" : "Pay " + amountLabel) +
+          '</button>' +
           '<p class="payment-note">&#128274; This is a prototype &mdash; no real payment is made.</p>' +
         '</div>' +
       '</div>'
     );
+  }
+
+  // Deterministic fake QR grid (purely visual, never a real payment code) —
+  // seeded off the tier so it looks stable rather than flickering per render.
+  function renderFakeQr(seed) {
+    var h = 0;
+    for (var i = 0; i < seed.length; i++) { h = (h * 31 + seed.charCodeAt(i)) >>> 0; }
+    var rnd = function () { h = (h * 9301 + 49297) % 233280; return h / 233280; };
+    var SIZE = 11;
+    var cells = "";
+    for (var r = 0; r < SIZE; r++) {
+      for (var c = 0; c < SIZE; c++) {
+        var inFinder = (r < 3 && c < 3) || (r < 3 && c >= SIZE - 3) || (r >= SIZE - 3 && c < 3);
+        var on;
+        if (inFinder) {
+          var fr = r < 3 ? r : SIZE - 1 - r, fc = c < 3 ? c : SIZE - 1 - c;
+          on = (fr === 0 || fr === 2 || fc === 0 || fc === 2) ? true : (fr === 1 && fc === 1);
+        } else {
+          on = rnd() > 0.52;
+        }
+        cells += '<span class="qr-cell' + (on ? ' on' : '') + '"></span>';
+      }
+    }
+    return '<div class="qr-grid">' + cells + '</div>';
   }
 
   // ---------------- Calls ----------------
@@ -699,12 +742,26 @@
     if (st.subscribed) {
       var subGroup = st.subscribedGroup === "multi" ? D.PLANS.multiHire : D.PLANS.singleHire;
       var subTier = subGroup.tiers.filter(function (t) { return t.id === st.subscribedTierId; })[0];
-      var subPriceText = subTier
-        ? '&#8377;' + subTier.perMonth.toLocaleString("en-IN") + '/month'
-        : '&#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month';
-      plansBlock = '<div class="card">' +
-        '<p class="section-title">You\'re subscribed' + (subTier ? ' &mdash; ' + esc(subTier.name) + (subGroup === D.PLANS.multiHire ? ' (Multi Hires)' : '') : '') + '</p>' +
-        '<p class="section-sub">' + subPriceText + '. One flat fee, no commission on salary.</p>' +
+      var validDays = subTier ? subTier.validDays : 30;
+      var daysElapsed = st.subscribedAt ? Math.floor((Date.now() - new Date(st.subscribedAt).getTime()) / 86400000) : 0;
+      var daysLeft = Math.max(0, validDays - daysElapsed);
+      var pctElapsed = Math.max(0, Math.min(100, Math.round((daysElapsed / validDays) * 100)));
+      var unlocksIncluded = subTier ? subTier.unlocks : null;
+
+      plansBlock = '<div class="card active-plan-card">' +
+        '<span class="plan-active-badge">&#9679; Active plan</span>' +
+        '<p class="section-title" style="margin:8px 0 2px;">' + esc(subTier ? subTier.name : "Your plan") + ' <span class="plan-active-group">&middot; ' + (subGroup === D.PLANS.multiHire ? "Multi Hires" : "Single Hire") + '</span></p>' +
+        '<p class="section-sub" style="margin-bottom:16px;">' + (subTier && subTier.perMonth ? '&#8377;' + subTier.perMonth.toLocaleString("en-IN") + '/month &mdash; ' : '') + 'One flat fee, no commission on salary.</p>' +
+        '<div class="plan-validity">' +
+          '<div class="plan-validity-row"><span>' + daysLeft + ' of ' + validDays + ' days left</span><span>' + pctElapsed + '% used</span></div>' +
+          '<div class="plan-validity-bar"><div class="plan-validity-fill" style="width:' + pctElapsed + '%;"></div></div>' +
+        '</div>' +
+        '<div class="plan-usage-grid">' +
+          planUsageStat("Candidates unlocked", shortlisted + (unlocksIncluded ? " / " + unlocksIncluded.toLocaleString("en-IN") : "")) +
+          planUsageStat("Profiles reviewed", reviewed) +
+          planUsageStat("Calls connected", calls) +
+          planUsageStat("Jobs active", subTier ? subTier.jobsActive : 1) +
+        '</div>' +
       '</div>';
     } else {
       var activeGroup = st.billingTab === "multi" ? D.PLANS.multiHire : D.PLANS.singleHire;
@@ -755,17 +812,21 @@
       '</div>' +
     '</div>';
 
+    var evidenceBlock = st.subscribed ? "" : (
+      '<div class="evidence-box">' +
+        '<p class="section-title" style="margin-bottom:10px;">' + heroText + '</p>' +
+        '<div class="evidence-row"><span>Profiles reviewed</span><span class="v">' + reviewed + ' / ' + D.TOTAL_ALLOCATION + '</span></div>' +
+        '<div class="evidence-row"><span>Calls connected</span><span class="v">' + calls + '</span></div>' +
+        '<div class="evidence-row"><span>Candidates shortlisted</span><span class="v">' + shortlisted + ' / ' + D.SHORTLIST_TARGET + '</span></div>' +
+        '<div class="evidence-row"><span>Days used</span><span class="v">' + st.day + ' / ' + D.TRIAL_DAY_CAP + '</span></div>' +
+      '</div>'
+    );
+
     return (
       '<div>' +
         jobStrip +
         tickerBlock +
-        '<div class="evidence-box">' +
-          '<p class="section-title" style="margin-bottom:10px;">' + heroText + '</p>' +
-          '<div class="evidence-row"><span>Profiles reviewed</span><span class="v">' + reviewed + ' / ' + D.TOTAL_ALLOCATION + '</span></div>' +
-          '<div class="evidence-row"><span>Calls connected</span><span class="v">' + calls + '</span></div>' +
-          '<div class="evidence-row"><span>Candidates shortlisted</span><span class="v">' + shortlisted + ' / ' + D.SHORTLIST_TARGET + '</span></div>' +
-          '<div class="evidence-row"><span>Days used</span><span class="v">' + st.day + ' / ' + D.TRIAL_DAY_CAP + '</span></div>' +
-        '</div>' +
+        evidenceBlock +
         '<div class="billing-layout">' +
           plansBlock +
           sidebar +
@@ -784,6 +845,10 @@
 
   function faqItem(q, a) {
     return '<div class="faq-item"><div class="faq-q">' + q + '</div><div class="faq-a">' + a + '</div></div>';
+  }
+
+  function planUsageStat(label, value) {
+    return '<div class="plan-usage-stat"><div class="plan-usage-v">' + value + '</div><div class="plan-usage-l">' + label + '</div></div>';
   }
 
   // One pricing tier card. Deliberately short: a "best for" purpose tag
