@@ -77,6 +77,15 @@ button { font-family: inherit; cursor: pointer; }
 .hv-tag { font-size: 10.5px; font-weight: 700; background: var(--success-light); color: var(--success); padding: 4px 9px; border-radius: 999px; }
 .hv-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 12px; color: var(--muted); }
 
+/* ---------- Employer logo ticker (first fold) ---------- */
+.employer-ticker { border-top: 1px solid var(--border); background: #fff; padding: 16px 0; overflow: hidden; }
+.employer-ticker-label { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); letter-spacing: .01em; margin-bottom: 12px; }
+.ticker-mask { position: relative; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.ticker-mask .ticker-track { display: flex; align-items: center; gap: 14px; width: max-content; animation: emp-scroll 26s linear infinite; }
+.ticker-mask:hover .ticker-track { animation-play-state: paused; }
+.emp-chip { flex: 0 0 auto; font-weight: 800; font-size: 16px; letter-spacing: -.01em; color: var(--b, var(--primary)); background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 22px; white-space: nowrap; }
+@keyframes emp-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
 /* ---------- Social proof ---------- */
 .proof { padding: 40px 0; border-bottom: 1px solid var(--border); }
 .proof-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; }
@@ -114,6 +123,12 @@ button { font-family: inherit; cursor: pointer; }
 .step-who.you { background: var(--primary-light); color: var(--primary); }
 .step-who.wi { background: var(--success-light); color: var(--success); }
 
+/* Icon-led, terse variant used in the second fold */
+.steps-icon .step { text-align: center; }
+.steps-icon .step-ic { font-size: 30px; line-height: 1; margin-bottom: 10px; }
+.steps-icon .step h3 { font-size: 15px; }
+.steps-icon .step p { font-size: 12.5px; }
+
 /* ---------- Testimonials ---------- */
 .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .testi-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
@@ -133,7 +148,8 @@ button { font-family: inherit; cursor: pointer; }
 .cat-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px 14px; text-align: center; transition: border-color .15s ease, transform .15s ease; }
 .cat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
 .cat-ic { font-size: 24px; margin-bottom: 8px; }
-.cat-card span { font-size: 12.5px; font-weight: 700; }
+.cat-card span { font-size: 12.5px; font-weight: 700; display: block; }
+.cat-card .cat-count { font-size: 11px; font-weight: 600; color: var(--primary); margin-top: 4px; }
 
 /* ---------- Pricing / assurance ---------- */
 .assure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
