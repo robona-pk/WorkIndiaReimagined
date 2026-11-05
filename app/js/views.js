@@ -734,8 +734,6 @@
       ? (st.trialEndReason === "shortlist_target" ? "You found " + D.SHORTLIST_TARGET + " strong candidates." : "Here's what your trial found.")
       : "Your trial is in progress.";
 
-    var myJobsBlock = renderMyJobs(st);
-
     var plansBlock;
     if (st.subscribed) {
       var subGroup = st.subscribedGroup === "multi" ? D.PLANS.multiHire : D.PLANS.singleHire;
@@ -824,7 +822,6 @@
 
     return (
       '<div>' +
-        myJobsBlock +
         tickerBlock +
         evidenceBlock +
         '<div class="billing-layout">' +
@@ -834,6 +831,15 @@
         (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
     );
+  }
+
+  // ---------------- My Jobs (own top-level section) ----------------
+  function renderJobsPage() {
+    var st = S.get();
+    if (!st.job) {
+      return '<div class="card"><p class="section-title">No job posted yet</p><p class="section-sub">Once you post a job it&rsquo;ll show up here with its status, requirements, and hire &amp; feedback tracking.</p></div>';
+    }
+    return renderMyJobs(st);
   }
 
   // One job row (this prototype only tracks one job at a time) with its
@@ -1007,6 +1013,7 @@
     matching: renderMatchingLoader,
     hotleads: renderHotLeadsStep,
     dashboard: renderDashboard,
+    jobs: renderJobsPage,
     candidates: renderCandidates,
     calls: renderCalls,
     billing: renderBilling,

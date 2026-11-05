@@ -13,6 +13,7 @@
 
   var TITLES = {
     dashboard: "Dashboard",
+    jobs: "My Jobs",
     candidates: "Candidates",
     calls: "Calls",
     billing: "Trial & Billing",
@@ -595,13 +596,24 @@
   }
 
   function applyIncomingSearch() {
-    var st = S.get();
-    if (st.onboarded) return;
     var params = new URLSearchParams(location.search);
     var role = params.get("role");
     var city = params.get("city");
-    if (role && city) {
-      S.submitSearch(role, city); // sets flowStep to "count" — the role/city search already happened on the landing page
+    if (!role || !city) return;
+    // Arriving with ?role=&city= means someone just submitted the landing
+    // page's "Start Hiring" search — that's an explicit request to walk
+    // through the demo flow, so always start fresh. Without this, a
+    // browser that already finished onboarding earlier would silently
+    // resume that old session and dump the visitor straight onto the
+    // dashboard, skipping login and job posting entirely.
+    var st = S.get();
+    if (st.onboarded) S.resetAll();
+    S.submitSearch(role, city); // sets flowStep to "count" — the role/city search already happened on the landing page
+    // Drop ?role=&city= from the URL once consumed, so reloading or
+    // revisiting this same link later doesn't silently wipe the session
+    // the visitor is now building.
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, "", location.pathname + location.hash);
     }
   }
 
