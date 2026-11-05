@@ -83,6 +83,40 @@
     document.getElementById("viewRoot").innerHTML = V[route]();
     renderShellChrome();
     wireViewActions();
+    wireRecruiterCallAudios();
+  }
+
+  function fmtTime(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+  }
+
+  // The recruiter-call recordings in the Calls tab use plain <audio>
+  // elements rather than the AI-call simulated-progress machinery, since
+  // there's no transcript-highlight sync to drive here — just play/pause
+  // and an elapsed/duration readout.
+  function wireRecruiterCallAudios() {
+    document.querySelectorAll("audio[data-rcall]").forEach(function (audio) {
+      var id = audio.getAttribute("data-rcall");
+      audio.onplay = function () {
+        document.querySelectorAll("audio[data-rcall]").forEach(function (a) { if (a !== audio) a.pause(); });
+        var btn = document.getElementById("rcallBtn-" + id);
+        if (btn) btn.innerHTML = "&#10074;&#10074;";
+      };
+      audio.onpause = function () {
+        var btn = document.getElementById("rcallBtn-" + id);
+        if (btn) btn.innerHTML = "&#9658;";
+      };
+      audio.onended = function () {
+        var btn = document.getElementById("rcallBtn-" + id);
+        if (btn) btn.innerHTML = "&#9658;";
+      };
+      audio.ontimeupdate = function () {
+        var lbl = document.getElementById("rcallTime-" + id);
+        if (lbl) lbl.textContent = fmtTime(audio.currentTime) + " / " + fmtTime(audio.duration);
+      };
+    });
   }
 
   // Animate the candidate count up from 0, then reveal the ₹1 pricing CTA
@@ -260,6 +294,23 @@
         var panel = document.getElementById("transcript-" + id);
         if (panel) panel.style.display = panel.style.display === "none" ? "block" : "none";
         break;
+      case "toggle-rcall":
+        var rAudio = document.getElementById("rcallAudio-" + id);
+        if (rAudio) { if (rAudio.paused) rAudio.play(); else rAudio.pause(); }
+        break;
+      case "toggle-summary":
+        var sumBox = document.getElementById("rcallSummary-" + id);
+        if (sumBox) sumBox.style.display = sumBox.style.display === "none" ? "block" : "none";
+        break;
+      case "view-profile":
+        document.querySelectorAll("audio").forEach(function (a) { a.pause(); });
+        S.openCandidateProfile(id);
+        render();
+        break;
+      case "close-profile":
+        S.closeCandidateProfile();
+        render();
+        break;
       case "start-trial":
         S.startTrial(window.__draftCompany || "Your Company");
         location.hash = "#/dashboard";
@@ -312,6 +363,7 @@
   function endCall() {
     if (callTimerInterval) clearInterval(callTimerInterval);
     var st = S.get();
+    if (st.callOverlayFor) S.recordCallDuration(st.callOverlayFor, st.callSeconds || 0);
     st.callPhase = "shortlist";
     render();
   }

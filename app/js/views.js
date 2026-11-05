@@ -411,14 +411,50 @@
     var waiting = st.relevantIds.filter(function (id) { return st.calledIds.indexOf(id) === -1; });
     var called = st.relevantIds.filter(function (id) { return st.calledIds.indexOf(id) !== -1; });
 
-    function row(id, status) {
+    function nameLink(c) {
+      return '<button type="button" class="cl-name-link" data-action="view-profile" data-id="' + c.id + '">' + esc(c.name) + '</button>';
+    }
+
+    function waitingRow(id) {
       var c = byId[id];
-      var tag = status === "waiting"
-        ? '<button class="btn primary" data-action="open-call" data-id="' + id + '">Call via platform</button>'
-        : (st.shortlistedIds.indexOf(id) !== -1
-            ? '<span class="pill success">Shortlisted</span>'
-            : (st.notFitIds.indexOf(id) !== -1 ? '<span class="pill muted">Not a fit</span>' : '<span class="pill warn">Awaiting decision</span>'));
-      return '<div class="call-list-item"><div><div class="nm">' + c.name + '</div><div class="meta">' + c.area + ' &middot; ' + c.experienceYears + ' yrs exp</div></div>' + tag + '</div>';
+      return (
+        '<div class="call-list-item">' +
+          '<div><div class="nm">' + nameLink(c) + '</div><div class="meta">' + c.area + ' &middot; ' + c.experienceYears + ' yrs exp</div></div>' +
+          '<button class="btn primary" data-action="open-call" data-id="' + id + '">Call via platform</button>' +
+        '</div>'
+      );
+    }
+
+    // A completed call: duration, a play button for the recruiter's own
+    // recorded call with the candidate (separate from the AI screening
+    // call shown on Hot Leads), and a Summary CTA that reveals a one-line
+    // post-call note built from the candidate's data + decision so far.
+    function doneRow(id) {
+      var c = byId[id];
+      var decision = st.shortlistedIds.indexOf(id) !== -1 ? "shortlisted"
+        : (st.notFitIds.indexOf(id) !== -1 ? "notFit" : "pending");
+      var tag = decision === "shortlisted" ? '<span class="pill success">Shortlisted</span>'
+        : (decision === "notFit" ? '<span class="pill muted">Not a fit</span>' : '<span class="pill warn">Awaiting decision</span>');
+      var durSec = st.callDurations[id];
+      if (durSec === undefined) durSec = 60 + (id.charCodeAt(id.length - 1) * 7) % 180; // fallback for pre-existing demo state
+      var summary = D.buildRecruiterCallSummary(c, decision);
+
+      return (
+        '<div class="call-list-item call-list-item-done">' +
+          '<div class="cl-top-row">' +
+            '<div><div class="nm">' + nameLink(c) + '</div><div class="meta">' + c.area + ' &middot; ' + c.experienceYears + ' yrs exp</div></div>' +
+            tag +
+          '</div>' +
+          '<div class="cl-call-row">' +
+            '<button type="button" class="cl-mini-play" id="rcallBtn-' + id + '" data-action="toggle-rcall" data-id="' + id + '" aria-label="Play recorded call">&#9658;</button>' +
+            '<span class="cl-duration" id="rcallTime-' + id + '">00:00 / ' + fmtTime(c.recruiterCallDurationSec) + '</span>' +
+            '<span class="cl-call-dur-total">&middot; call lasted ' + fmtTime(durSec) + '</span>' +
+            '<audio id="rcallAudio-' + id + '" data-rcall="' + id + '" src="' + c.recruiterCallFile + '" preload="none"></audio>' +
+            '<button type="button" class="btn ghost cl-summary-btn" data-action="toggle-summary" data-id="' + id + '">Summary</button>' +
+          '</div>' +
+          '<div class="cl-summary-box" id="rcallSummary-' + id + '" style="display:none;">' + esc(summary) + '</div>' +
+        '</div>'
+      );
     }
 
     return (
@@ -426,11 +462,46 @@
         '<div class="card" style="margin-bottom:18px;">' +
           '<p class="section-title">Ready to call</p>' +
           '<p class="section-sub">Masked, platform-only. No external number is ever shown &mdash; a call must connect to count toward your trial.</p>' +
-          (waiting.length ? waiting.map(function (id) { return row(id, "waiting"); }).join("") : '<p class="hint">No unlocked candidates waiting right now &mdash; mark some Relevant on the <a href="#/candidates">Candidates</a> page first.</p>') +
+          (waiting.length ? waiting.map(waitingRow).join("") : '<p class="hint">No unlocked candidates waiting right now &mdash; mark some Relevant on the <a href="#/candidates">Candidates</a> page first.</p>') +
         '</div>' +
-        (called.length ? '<div class="card"><p class="section-title">Call history</p>' + called.map(function (id) { return row(id, "done"); }).join("") + '</div>' : "") +
+        (called.length ? '<div class="card"><p class="section-title">Call history</p><p class="section-sub">Tap a name to open the full profile. Each call has its own recording and a quick summary.</p>' + called.map(doneRow).join("") + '</div>' : "") +
         (st.callOverlayFor ? renderCallOverlay(byId[st.callOverlayFor]) : "") +
+        (st.profileOpenFor ? renderCandidateProfileOverlay(byId[st.profileOpenFor]) : "") +
         (st.showPaywall ? renderPaywall() : "") +
+      '</div>'
+    );
+  }
+
+  // Full candidate profile, reachable by clicking a name anywhere in the
+  // Calls tab. Shows everything known about the candidate plus whichever
+  // call recordings exist for them (AI screening call and/or the
+  // recruiter's own call), so "redirected to the candidate's profile"
+  // doesn't just repeat what the list row already showed.
+  function renderCandidateProfileOverlay(c) {
+    if (!c) return "";
+    var payStr = "&#8377;" + c.payExpectationMin.toLocaleString("en-IN") + "&ndash;&#8377;" + c.payExpectationMax.toLocaleString("en-IN");
+    return (
+      '<div class="call-overlay" data-action-bg="close-profile">' +
+        '<div class="profile-panel">' +
+          '<button class="paywall-close" data-action="close-profile" aria-label="Close">&times;</button>' +
+          '<div class="profile-head">' +
+            '<div class="profile-avatar">' + avatarInitials(c.name) + '</div>' +
+            '<div>' +
+              '<p class="profile-name">' + esc(c.name) + '</p>' +
+              '<p class="profile-sub">' + c.age + ' yrs &middot; ' + c.experienceYears + ' yrs exp &middot; ' + esc(c.area) + ' (' + c.distanceKm + ' km away)</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="profile-grid">' +
+            '<div><span class="pl">Availability</span><span class="pv">' + esc(c.availability) + '</span></div>' +
+            '<div><span class="pl">Pay expectation</span><span class="pv">' + payStr + '/month</span></div>' +
+            '<div><span class="pl">Education</span><span class="pv">' + esc(c.education) + '</span></div>' +
+            '<div><span class="pl">Language</span><span class="pv">' + esc(c.language) + '</span></div>' +
+          '</div>' +
+          '<p class="field-mini-label" style="margin-top:14px;">Skills</p>' +
+          '<div class="chip-opts" style="pointer-events:none;">' + c.skills.map(function (s) { return '<span class="chip-opt active" style="cursor:default;">' + esc(s) + '</span>'; }).join("") + '</div>' +
+          '<p class="field-mini-label" style="margin-top:16px;">AI screening call</p>' +
+          renderCallRecording(c) +
+        '</div>' +
       '</div>'
     );
   }

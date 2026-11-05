@@ -35,7 +35,9 @@
       subscribed: false,
       hireConfirmed: false,
       hireRating: null,
-      updatesFeed: []            // WhatsApp-style message log
+      updatesFeed: [],           // WhatsApp-style message log
+      callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
+      profileOpenFor: null       // candidateId whose profile overlay is open, or null
     };
   }
 
@@ -152,6 +154,24 @@
 
     connectCall: function (candidateId) {
       state.calledIds.push(candidateId);
+      save(state);
+    },
+
+    // Called once a recruiter's own call (via "Call via platform") ends,
+    // so the Calls tab can show real elapsed duration per candidate
+    // instead of nothing.
+    recordCallDuration: function (candidateId, seconds) {
+      state.callDurations[candidateId] = seconds;
+      save(state);
+    },
+
+    openCandidateProfile: function (candidateId) {
+      state.profileOpenFor = candidateId;
+      save(state);
+    },
+
+    closeCandidateProfile: function () {
+      state.profileOpenFor = null;
       save(state);
     },
 

@@ -1,0 +1,17 @@
+{
+  "recruiter-call-en-1": {
+    "lang": "en",
+    "file": "audio/recruiter-call-en-1.mp3",
+    "duration": 27.56
+  },
+  "recruiter-call-en-2": {
+    "lang": "en",
+    "file": "audio/recruiter-call-en-2.mp3",
+    "duration": 20.98
+  },
+  "recruiter-call-hi-1": {
+    "lang": "hi",
+    "file": "audio/recruiter-call-hi-1.mp3",
+    "duration": 26.37
+  }
+}

@@ -217,6 +217,29 @@
   };
 
 
+  // Generic recruiter<->candidate call clips (real synthesized audio, same
+  // telephony-filtered pipeline as the AI screening calls) — these are the
+  // recruiter's OWN calls made via "Call via platform" in the Calls tab,
+  // not the AI pre-screening call. Durations come from the actual files.
+  var RECRUITER_CALL_CLIPS = [
+    { file: "audio/recruiter-call-en-1.mp3", duration: 28, lang: "en" },
+    { file: "audio/recruiter-call-en-2.mp3", duration: 21, lang: "en" },
+    { file: "audio/recruiter-call-hi-1.mp3", duration: 27, lang: "hi" }
+  ];
+
+  // A one-line, templated "call summary" for the Calls tab's Summary CTA —
+  // built from the data already captured about the candidate plus whatever
+  // decision the recruiter has recorded so far, so it reads like a real
+  // post-call note rather than a static blurb.
+  function buildRecruiterCallSummary(candidate, decision) {
+    var payStr = "₹" + candidate.payExpectationMin.toLocaleString("en-IN") + "–₹" + candidate.payExpectationMax.toLocaleString("en-IN");
+    var base = candidate.name + " confirmed they're " + candidate.availability.toLowerCase() +
+      ", expects " + payStr + "/month for " + candidate.skills[0].toLowerCase() + ", " + candidate.distanceKm + " km from the job location.";
+    if (decision === "shortlisted") return base + " Good fit on paper and on the call — shortlisted.";
+    if (decision === "notFit") return base + " Didn't line up on fit after talking it through — marked not a fit.";
+    return base + " Awaiting a shortlist decision.";
+  }
+
   function buildCandidatePool(count) {
     var rnd = seededRandom(42);
     var pool = [];
@@ -248,6 +271,14 @@
       var override = AUDIO_OVERRIDES[id];
       var audio = CALL_AUDIO[id];
 
+      // The recruiter's OWN call with the candidate (made via "Call via
+      // platform" in the Calls tab) is a different call from the AI
+      // pre-screening call above — different audio, different purpose.
+      // Cycle through a small set of generic recruiter<->candidate clips,
+      // biased toward the Hindi one for Hindi-only-comfort profiles.
+      var hindiOnly = language.indexOf("Hindi only") !== -1;
+      var rClip = hindiOnly ? RECRUITER_CALL_CLIPS[2] : RECRUITER_CALL_CLIPS[i % 2];
+
       pool.push({
         id: id,
         name: override ? override.name : name,
@@ -266,7 +297,10 @@
         callDurationSec: audio ? Math.ceil(audio.duration) : 38 + Math.floor(rnd() * 25),
         callTranscript: audio ? audio.lines : transcript,
         audioFile: audio ? audio.file : null,
-        audioLang: audio ? audio.lang : null
+        audioLang: audio ? audio.lang : null,
+        recruiterCallFile: rClip.file,
+        recruiterCallDurationSec: rClip.duration,
+        recruiterCallLang: rClip.lang
       });
     }
     return pool;
@@ -342,6 +376,7 @@
     CITY_SUGGESTIONS: CITY_SUGGESTIONS,
     CATEGORIES: CATEGORIES,
     estimateCandidateCount: estimateCandidateCount,
-    suggestJobSpec: suggestJobSpec
+    suggestJobSpec: suggestJobSpec,
+    buildRecruiterCallSummary: buildRecruiterCallSummary
   };
 })(window);
