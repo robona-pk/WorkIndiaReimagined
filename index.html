@@ -35,9 +35,20 @@
       <p class="hero-sub">Post a job in minutes. Get calls from candidates who are actually available, actually nearby, and actually a fit — not just a database to scroll through.</p>
 
       <form class="hero-form" id="hero-form">
-        <input type="tel" inputmode="numeric" placeholder="Enter your mobile number" id="heroPhone" required maxlength="10" pattern="[0-9]{10}">
-        <button type="submit" class="btn btn-primary">Start Hiring</button>
+        <input type="text" placeholder="Job title, e.g. Delivery Executive" id="heroRole" list="heroRoleList" required>
+        <input type="text" placeholder="City" id="heroCity" list="heroCityList" required>
+        <button type="submit" class="btn btn-primary">Search Candidates</button>
       </form>
+      <datalist id="heroRoleList">
+        <option value="Delivery Executive"><option value="Driver"><option value="Security Guard">
+        <option value="Telecaller"><option value="Retail Associate"><option value="Warehouse Picker">
+        <option value="Housekeeping Staff"><option value="Field Sales Executive"><option value="Technician">
+        <option value="Back Office Executive">
+      </datalist>
+      <datalist id="heroCityList">
+        <option value="Mumbai"><option value="Delhi NCR"><option value="Bengaluru"><option value="Hyderabad">
+        <option value="Pune"><option value="Kolkata"><option value="Chennai"><option value="Ahmedabad">
+      </datalist>
       <div class="hero-ctas-sec">
         <span>Hiring 10+ people?</span>
         <a href="tel:08069824660">Talk to Sales &rarr;</a>

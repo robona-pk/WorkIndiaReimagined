@@ -32,30 +32,17 @@
     });
   });
 
-  // Hero phone form — demo-only submit (no backend here); validates and
-  // gives a confirmation state rather than pretending to register anyone.
+  // Hero search — the job search IS the entry point into the app. Submitting
+  // takes the role + city straight into the app at the candidate-count step,
+  // skipping its own separate search screen entirely.
   var form = document.getElementById("hero-form");
   if (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var phone = document.getElementById("heroPhone");
-      var val = phone.value.replace(/\D/g, "");
-      if (val.length !== 10) {
-        phone.style.borderColor = "#B91C1C";
-        phone.focus();
-        return;
-      }
-      phone.style.borderColor = "#15803D";
-      var btn = form.querySelector("button");
-      var original = btn.textContent;
-      btn.textContent = "Sending OTP…";
-      btn.disabled = true;
-      setTimeout(function () {
-        btn.textContent = "Verified — taking you in ✓";
-        setTimeout(function () {
-          window.location.href = "app/";
-        }, 900);
-      }, 900);
+      var role = document.getElementById("heroRole").value.trim();
+      var city = document.getElementById("heroCity").value.trim();
+      if (!role || !city) return;
+      window.location.href = "app/?role=" + encodeURIComponent(role) + "&city=" + encodeURIComponent(city);
     });
   }
 })();

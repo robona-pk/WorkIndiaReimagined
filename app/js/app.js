@@ -303,9 +303,21 @@
     st.callPhase = null;
   }
 
+  function applyIncomingSearch() {
+    var st = S.get();
+    if (st.onboarded) return;
+    var params = new URLSearchParams(location.search);
+    var role = params.get("role");
+    var city = params.get("city");
+    if (role && city) {
+      S.submitSearch(role, city); // sets flowStep to "count" — the role/city search already happened on the landing page
+    }
+  }
+
   window.addEventListener("hashchange", render);
   window.addEventListener("DOMContentLoaded", function () {
     if (!location.hash) location.hash = "#/dashboard";
+    applyIncomingSearch();
     render();
   });
 })();
