@@ -1,17 +1,17 @@
 :root {
-  --ink: #17191C;
-  --muted: #62646B;
+  --ink: #15202E;
+  --muted: #5B6B82;
   --bg: #FFFFFF;
-  --bg-soft: #F5F4F0;
-  --border: #E6E3DA;
-  --primary: #D45A1A;
-  --primary-dark: #A5450F;
-  --primary-light: #FBE8DA;
-  --navy: #10333A;
-  --navy-dark: #0A2227;
+  --bg-soft: #F2F6FC;
+  --border: #DDE6F2;
+  --primary: #1757D6;
+  --primary-dark: #103F9E;
+  --primary-light: #E7EFFD;
+  --navy: #0B2A5C;
+  --navy-dark: #071A3C;
   --success: #1F7A4D;
   --success-light: #E7F5EC;
-  --warn-light: #FBF0DD;
+  --warn-light: #FFF3D6;
   --radius: 10px;
   --maxw: 1180px;
 }
@@ -31,7 +31,7 @@ button { font-family: inherit; cursor: pointer; }
 /* ---------- Buttons ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; font-weight: 700; font-size: 14.5px; padding: 13px 22px; border: none; transition: transform .12s ease, box-shadow .12s ease; }
 .btn:active { transform: translateY(1px); }
-.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 18px rgba(26,86,219,.28); }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 6px 18px rgba(23,87,214,.28); }
 .btn-primary:hover { background: var(--primary-dark); }
 .btn-secondary { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
 .btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--border); }
