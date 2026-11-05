@@ -43,21 +43,41 @@
       var payMin = 13000 + Math.floor(rnd() * 5) * 1000;
       var payMax = payMin + 2000;
       var skills = [pick(SKILLS_POOL, rnd), pick(SKILLS_POOL, rnd), pick(SKILLS_POOL, rnd)];
+      var name = pick(FIRST_NAMES, rnd) + " " + pick(LAST_INITIALS, rnd) + ".";
+      var area = pick(AREAS, rnd);
+      var language = pick(LANG_PROFILES, rnd);
+      var availability = pick(AVAIL, rnd);
+      var primarySkill = skills[0];
+
+      var transcript = [
+        { who: "ai", t: "Hi, this is WorkIndia calling on behalf of an employer hiring for " + primarySkill + " near " + area + ". Do you have a minute?" },
+        { who: "candidate", t: "Yes, tell me." },
+        { who: "ai", t: "Are you currently looking for work, and when could you start?" },
+        { who: "candidate", t: availability.replace("Available ", "I can start ").toLowerCase() + "." },
+        { who: "ai", t: "What salary are you expecting per month?" },
+        { who: "candidate", t: "Around ₹" + payMin.toLocaleString("en-IN") + " to ₹" + payMax.toLocaleString("en-IN") + "." },
+        { who: "ai", t: "And you're comfortable travelling to " + area + " for this role?" },
+        { who: "candidate", t: "Yes, that's fine, it's close to where I stay." },
+        { who: "ai", t: "Great — thanks, I'll pass this on to the employer." }
+      ];
+
       pool.push({
         id: "cand-" + (i + 1),
-        name: pick(FIRST_NAMES, rnd) + " " + pick(LAST_INITIALS, rnd) + ".",
+        name: name,
         age: 21 + Math.floor(rnd() * 20),
-        area: pick(AREAS, rnd),
+        area: area,
         distanceKm: distKm,
         experienceYears: exp,
         education: rnd() < 0.7 ? "< 10th Pass" : "10th Pass",
         skills: skills,
-        language: pick(LANG_PROFILES, rnd),
-        availability: pick(AVAIL, rnd),
+        language: language,
+        availability: availability,
         payExpectationMin: payMin,
         payExpectationMax: payMax,
         aiCallSummary: "AI confirmed availability and pay fit by voice call before this profile was shown.",
-        aiScreenPassed: true
+        aiScreenPassed: true,
+        callDurationSec: 38 + Math.floor(rnd() * 25),
+        callTranscript: transcript
       });
     }
     return pool;

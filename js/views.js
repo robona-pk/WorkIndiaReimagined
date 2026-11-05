@@ -15,6 +15,13 @@
     return (m < 10 ? "0" + m : m) + ":" + (ss < 10 ? "0" + ss : ss);
   }
 
+  function tickerItems() {
+    var cats = ["Logistics &amp; last-mile delivery", "Quick-commerce warehouses", "Security &amp; facility management",
+      "QSR &amp; restaurant chains", "Retail &amp; supermarket chains", "Field sales teams",
+      "Manufacturing &amp; factories", "Courier &amp; fleet operators", "Hospitality &amp; housekeeping", "Healthcare support staff"];
+    return cats.map(function (c) { return '<span class="ticker-chip">' + c + '</span>'; }).join("");
+  }
+
   // ---------------- Landing (context first) ----------------
   function renderLanding() {
     return (
@@ -22,26 +29,35 @@
         '<div class="land-hero">' +
           '<span class="land-kicker">WorkIndia &middot; Employer trial, reimagined</span>' +
           '<h1>What this prototype is</h1>' +
-          '<p class="land-sub">This is a working mockup of a redesigned employer trial for WorkIndia (blue/grey-collar hiring: delivery, drivers, warehouse, field staff). It is not live on workindia.in &mdash; it is a front-end-only demo built to show a different way of running the free trial, grounded in real data below.</p>' +
+          '<p class="land-sub">This is a working mockup of a redesigned employer trial for WorkIndia (blue/grey-collar hiring: delivery, drivers, warehouse, field staff). It is not live on workindia.in &mdash; it is a front-end-only demo built to show a different way of running the free trial.</p>' +
+        '</div>' +
+
+        '<div class="ticker-wrap"><div class="ticker-label">Built for businesses hiring like these</div><div class="ticker-track">' +
+          tickerItems() + tickerItems() +
+        '</div></div>' +
+
+        '<div class="trust-strip">' +
+          '<div class="trust-item"><span class="ic">&#9989;</span><span>Candidates verified by AI call before you see them</span></div>' +
+          '<div class="trust-item"><span class="ic">&#128274;</span><span>Calls stay inside the platform &mdash; your number is never shared</span></div>' +
+          '<div class="trust-item"><span class="ic">&#8377;</span><span>One flat fee, no commission on salary &mdash; not a staffing consultancy</span></div>' +
+          '<div class="trust-item"><span class="ic">&#128222;</span><span>Support team reachable by call &amp; WhatsApp, no English required</span></div>' +
         '</div>' +
 
         '<div class="land-section">' +
-          '<h2>The problem today</h2>' +
-          '<div class="land-stat-grid">' +
-            '<div class="land-stat"><div class="num">~1%</div><div class="lbl">conversion on telesales-acquired employers &mdash; a volume-only channel</div></div>' +
-            '<div class="land-stat"><div class="num">67%</div><div class="lbl">of job postings happen via an agent on the employer\'s behalf &mdash; the employer never visits the platform</div></div>' +
-            '<div class="land-stat"><div class="num">78.5%</div><div class="lbl">of employers never unlock a single candidate during their trial</div></div>' +
-            '<div class="land-stat"><div class="num">10.3&times;</div><div class="lbl">higher conversion for employers who visited, got responses, <em>and</em> used an unlock &mdash; vs. the largest passive cohort</div></div>' +
-          '</div>' +
-          '<p class="land-note">A live walkthrough of the real employer flow (OTP login through to job posting) surfaced more: trial pricing copy that discourages trying the trial in the first place, a second trial-vs-skip prompt re-asked at checkout, and a stray "wallet balance low, job rejected" message on a brand-new trial account that is actually just pending a routine fraud/KYC check.</p>' +
+          '<h2>What a good hiring platform promises</h2>' +
+          '<ul class="land-list">' +
+            '<li><strong>Speed to first signal.</strong> You should hear from a real, relevant candidate quickly &mdash; not just see a count of how many exist.</li>' +
+            '<li><strong>Verified before you see them.</strong> A profile should already be checked for fit, not a raw listing you have to vet yourself.</li>' +
+            '<li><strong>Simple to post, simple to judge.</strong> A short posting flow, and a clear way to say yes/no on each candidate &mdash; no ambiguity about what to do next.</li>' +
+          '</ul>' +
         '</div>' +
 
         '<div class="land-section">' +
-          '<h2>What this prototype changes</h2>' +
+          '<h2>How this redesign delivers on that</h2>' +
           '<ul class="land-list">' +
             '<li><strong>AI voice pre-screen before you ever see a profile.</strong> Availability, pay expectation, location and language are confirmed by an AI call first &mdash; what you see is a verified card, not a raw resume.</li>' +
-            '<li><strong>Mark Relevant to unlock contact.</strong> No swipe-and-hope &mdash; WorkIndia tried pure profile swiping before and it failed in UAT because employers couldn\'t judge fit without a call.</li>' +
-            '<li><strong>A fixed, rationed batch of candidates</strong> (30 total, 10 at a time) instead of unlimited browsing against a 197,000-candidate database you can\'t touch.</li>' +
+            '<li><strong>Mark Relevant to unlock contact.</strong> No swipe-and-hope &mdash; pure profile swiping was tried before and failed because employers couldn\'t judge fit without a call.</li>' +
+            '<li><strong>A fixed, rationed batch of candidates</strong> (30 total, 10 at a time) instead of unlimited browsing against a database you can\'t act on.</li>' +
             '<li><strong>Calling happens inside the platform only, masked</strong> &mdash; Uber-style &mdash; and a call only counts once it actually connects.</li>' +
             '<li><strong>The trial ends on outcome, not just time:</strong> 3 candidates shortlisted, or the 30-profile allocation used up, or 7 days &mdash; whichever comes first.</li>' +
             '<li><strong>A post-hire feedback loop</strong> that doesn\'t exist today &mdash; once a hire is confirmed, the employer is asked to rate it.</li>' +
@@ -140,6 +156,29 @@
     return '<div class="timeline-item ' + (done ? "" : "pending") + '"><span class="dot"></span><span>' + label + '</span></div>';
   }
 
+  // ---------------- AI screening call recording (per candidate card) ----------------
+  function renderCallRecording(c) {
+    var dur = c.callDurationSec || 45;
+    var transcriptLines = (c.callTranscript || []).map(function (line, idx) {
+      return '<div class="rec-line ' + line.who + '" id="recline-' + c.id + '-' + idx + '">' +
+        '<span class="rec-who">' + (line.who === "ai" ? "AI" : c.name.split(" ")[0]) + '</span>' +
+        '<span class="rec-text">' + line.t + '</span>' +
+      '</div>';
+    }).join("");
+
+    return (
+      '<div class="call-rec" data-cand="' + c.id + '">' +
+        '<button class="rec-play-btn" id="recBtn-' + c.id + '" data-action="toggle-recording" data-id="' + c.id + '" aria-label="Play AI screening call">&#9658;</button>' +
+        '<div class="rec-mid">' +
+          '<div class="rec-track"><div class="rec-fill" id="recFill-' + c.id + '"></div></div>' +
+          '<div class="rec-time" id="recTime-' + c.id + '">0:00 / ' + fmtTime(dur) + '</div>' +
+        '</div>' +
+        '<button class="rec-transcript-btn" data-action="toggle-transcript" data-id="' + c.id + '">Transcript</button>' +
+      '</div>' +
+      '<div class="rec-transcript" id="transcript-' + c.id + '" style="display:none;">' + transcriptLines + '</div>'
+    );
+  }
+
   // ---------------- Candidates ----------------
   function renderCandidates() {
     var st = S.get();
@@ -192,6 +231,7 @@
             '<div class="ai-fact"><span class="dot2"></span><span>Expects &#8377;' + c.payExpectationMin.toLocaleString("en-IN") + '&ndash;&#8377;' + c.payExpectationMax.toLocaleString("en-IN") + '</span></div>' +
             '<div class="ai-fact"><span class="dot2"></span><span>' + c.language + '</span></div>' +
           '</div>' +
+          renderCallRecording(c) +
           (isCurrent ? '<div class="cand-actions">' +
             '<button class="btn outline-danger" data-action="mark-not-relevant" data-id="' + c.id + '">Not relevant</button>' +
             '<button class="btn success" data-action="mark-relevant" data-id="' + c.id + '">Relevant</button>' +

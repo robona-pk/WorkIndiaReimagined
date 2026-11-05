@@ -148,6 +148,13 @@
         window.__showOnboardForm = false;
         render();
         break;
+      case "toggle-recording":
+        toggleRecording(id);
+        break;
+      case "toggle-transcript":
+        var panel = document.getElementById("transcript-" + id);
+        if (panel) panel.style.display = panel.style.display === "none" ? "block" : "none";
+        break;
     }
   }
 
@@ -184,6 +191,78 @@
     var st = S.get();
     st.callPhase = "shortlist";
     render();
+  }
+
+  var recordings = {}; // candId -> { elapsed, interval, duration, transcript }
+
+  function toggleRecording(id) {
+    // pause any other recording currently playing
+    Object.keys(recordings).forEach(function (otherId) {
+      if (otherId !== id && recordings[otherId].interval) pauseRecording(otherId);
+    });
+
+    if (!recordings[id]) {
+      var cand = window.WI_DATA.CANDIDATE_POOL.filter(function (c) { return c.id === id; })[0];
+      recordings[id] = { elapsed: 0, interval: null, duration: cand.callDurationSec || 45, transcript: cand.callTranscript || [] };
+    }
+    var rec = recordings[id];
+    if (rec.interval) {
+      pauseRecording(id);
+    } else {
+      playRecording(id);
+    }
+  }
+
+  function playRecording(id) {
+    var rec = recordings[id];
+    var btn = document.getElementById("recBtn-" + id);
+    if (btn) { btn.innerHTML = "&#10073;&#10073;"; btn.classList.add("playing"); }
+    rec.interval = setInterval(function () {
+      rec.elapsed += 0.4;
+      if (rec.elapsed >= rec.duration) {
+        rec.elapsed = rec.duration;
+        updateRecordingUI(id);
+        pauseRecording(id);
+        return;
+      }
+      updateRecordingUI(id);
+    }, 400);
+  }
+
+  function pauseRecording(id) {
+    var rec = recordings[id];
+    if (rec && rec.interval) { clearInterval(rec.interval); rec.interval = null; }
+    var btn = document.getElementById("recBtn-" + id);
+    if (btn) { btn.innerHTML = "&#9658;"; btn.classList.remove("playing"); }
+  }
+
+  function updateRecordingUI(id) {
+    var rec = recordings[id];
+    var pct = Math.min(100, (rec.elapsed / rec.duration) * 100);
+    var fill = document.getElementById("recFill-" + id);
+    var time = document.getElementById("recTime-" + id);
+    if (fill) fill.style.width = pct + "%";
+    if (time) {
+      var fmt = function (sec) {
+        var m = Math.floor(sec / 60), ss = Math.floor(sec % 60);
+        return (m < 10 ? "0" + m : m) + ":" + (ss < 10 ? "0" + ss : ss);
+      };
+      time.textContent = fmt(rec.elapsed) + " / " + fmt(rec.duration);
+    }
+    // highlight the transcript line whose cumulative share of the call has been "reached"
+    var n = rec.transcript.length;
+    if (n > 0) {
+      var activeIdx = Math.min(n - 1, Math.floor((rec.elapsed / rec.duration) * n));
+      for (var i = 0; i < n; i++) {
+        var lineEl = document.getElementById("recline-" + id + "-" + i);
+        if (lineEl) lineEl.classList.toggle("heard", i <= activeIdx);
+      }
+      var panel = document.getElementById("transcript-" + id);
+      if (panel && panel.style.display !== "none") {
+        var activeEl = document.getElementById("recline-" + id + "-" + activeIdx);
+        if (activeEl) activeEl.scrollIntoView({ block: "nearest" });
+      }
+    }
   }
 
   function closeCallOverlay() {
