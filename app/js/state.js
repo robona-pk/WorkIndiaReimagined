@@ -11,12 +11,14 @@
   function defaultState() {
     return {
       onboarded: false,
-      flowStep: "search",        // "search" | "count" | "pricing" | "login" | "posting" | "hotleads"
+      flowStep: "search",        // "search" | "count" | "login" | "posting" | "matching" | "hotleads"
       searchRole: null,
       searchCity: null,
       draftJob: null,            // AI-suggested job spec, built on the posting step
       company: null,
+      companyProfile: null,      // { industry, size, location }
       phone: null,
+      showPaywall: false,
       job: null,                 // { title, city, area, salaryMin, salaryMax, openings }
       jobPostedAt: null,
       day: 1,
@@ -83,19 +85,21 @@
       save(state);
     },
 
-    confirmJobPosting: function (jobDraft) {
+    confirmJobPosting: function (jobDraft, companyProfile) {
       state.draftJob = jobDraft;
-      state.flowStep = "hotleads";
+      state.companyProfile = companyProfile || null;
+      state.flowStep = "matching";
       save(state);
     },
 
     startTrial: function (company) {
-      Actions.postJob(company, state.phone, state.draftJob);
+      Actions.postJob(company, state.phone, state.draftJob, state.companyProfile);
     },
 
-    postJob: function (company, phone, job) {
+    postJob: function (company, phone, job, companyProfile) {
       state.onboarded = true;
       state.company = company;
+      state.companyProfile = companyProfile || state.companyProfile;
       state.phone = phone;
       state.job = job;
       state.jobPostedAt = new Date().toISOString();
@@ -151,12 +155,28 @@
       save(state);
     },
 
-    markShortlisted: function (candidateId) {
+    // Returns true if the shortlist succeeded, false if it hit the trial
+    // cap and the paywall should be shown instead.
+    shortlistCandidate: function (candidateId) {
+      if (state.shortlistedIds.indexOf(candidateId) !== -1) return true;
+      if (!state.subscribed && state.shortlistedIds.length >= global.WI_DATA.SHORTLIST_TARGET) {
+        state.showPaywall = true;
+        save(state);
+        return false;
+      }
       state.shortlistedIds.push(candidateId);
-      pushUpdate("Nice — you've shortlisted " + state.shortlistedIds.length + " of " + global.WI_DATA.SHORTLIST_TARGET + " candidates needed to complete your trial.");
+      pushUpdate("Nice — you've shortlisted " + state.shortlistedIds.length + " of " + global.WI_DATA.SHORTLIST_TARGET + " candidates included in your trial.");
       checkTrialEnd();
       save(state);
+      return true;
     },
+
+    markShortlisted: function (candidateId) {
+      return Actions.shortlistCandidate(candidateId);
+    },
+
+    openPaywall: function () { state.showPaywall = true; save(state); },
+    closePaywall: function () { state.showPaywall = false; save(state); },
 
     markNotFit: function (candidateId) {
       state.notFitIds.push(candidateId);
@@ -189,12 +209,13 @@
     }
   }
 
+  // Reaching the 3-shortlist trial cap does NOT end the trial by itself —
+  // the hiring manager can keep reviewing; trying to shortlist a 4th is
+  // what surfaces the paywall (see Actions.shortlistCandidate). The trial
+  // only auto-ends on allocation or day-cap, same as before.
   function checkTrialEnd() {
     if (state.trialEnded) return;
-    if (state.shortlistedIds.length >= global.WI_DATA.SHORTLIST_TARGET) {
-      state.trialEnded = true;
-      state.trialEndReason = "shortlist_target";
-    } else if (state.reviewed >= global.WI_DATA.TOTAL_ALLOCATION) {
+    if (state.reviewed >= global.WI_DATA.TOTAL_ALLOCATION) {
       state.trialEnded = true;
       state.trialEndReason = "allocation_exhausted";
     } else if (state.day >= global.WI_DATA.TRIAL_DAY_CAP) {

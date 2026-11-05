@@ -15,18 +15,11 @@
     return (m < 10 ? "0" + m : m) + ":" + (ss < 10 ? "0" + ss : ss);
   }
 
-  function tickerItems() {
-    var cats = ["Logistics &amp; last-mile delivery", "Quick-commerce warehouses", "Security &amp; facility management",
-      "QSR &amp; restaurant chains", "Retail &amp; supermarket chains", "Field sales teams",
-      "Manufacturing &amp; factories", "Courier &amp; fleet operators", "Hospitality &amp; housekeeping", "Healthcare support staff"];
-    return cats.map(function (c) { return '<span class="ticker-chip">' + c + '</span>'; }).join("");
-  }
-
   // ---------------- Step 1: job search ----------------
   function renderJobSearch() {
     return (
       '<div class="onb-wrap flow-step">' +
-        '<div class="flow-progress">Step 1 of 6 &middot; Find your candidates</div>' +
+        '<div class="flow-progress">Step 1 of 4 &middot; Find your candidates</div>' +
         '<div class="onb-logo">W</div>' +
         '<h1 class="onb-title">Who are you hiring?</h1>' +
         '<p class="onb-sub">Tell us the role and the city &mdash; we\'ll show you how many candidates are available before you commit to anything.</p>' +
@@ -43,40 +36,28 @@
     );
   }
 
-  // ---------------- Step 2: candidate count ----------------
+  // ---------------- Step 2: candidate count + pricing, one screen ----------------
+  // A short count-up loader, then the ₹1 pricing hook reveals in place —
+  // no separate "Continue" screen. app.js drives the count-up animation
+  // and the reveal timing; this just renders the two states' markup.
   function renderCandidateCount() {
     var st = S.get();
     var count = D.estimateCandidateCount(st.searchRole, st.searchCity);
     return (
-      '<div class="onb-wrap flow-step">' +
-        '<div class="flow-progress">Step 2 of 6 &middot; Candidates available</div>' +
+      '<div class="onb-wrap flow-step" data-count-target="' + count + '">' +
+        '<div class="flow-progress">Step 2 of 4 &middot; Candidates available</div>' +
         '<div class="count-hero">' +
-          '<div class="count-num">' + count.toLocaleString("en-IN") + '</div>' +
+          '<div class="count-num" id="countNum">0</div>' +
           '<p class="count-label">candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b></p>' +
         '</div>' +
-        '<div class="card">' +
-          '<p class="section-sub" style="margin-bottom:16px;">That\'s how many exist. What matters is how many are actually available, nearby and a fit &mdash; which is what the trial screens for before you ever see a profile.</p>' +
-          '<button class="btn primary full" data-action="goto-pricing">Continue &rarr;</button>' +
-        '</div>' +
-      '</div>'
-    );
-  }
-
-  // ---------------- Step 3: pricing teaser ----------------
-  function renderPricingTeaser() {
-    return (
-      '<div class="onb-wrap flow-step">' +
-        '<div class="flow-progress">Step 3 of 6 &middot; Start your trial</div>' +
-        '<div class="price-hero">' +
-          '<div class="price-rupee">&#8377;' + D.PLANS.trialDueToday + '</div>' +
-          '<p class="price-label">to start hiring today</p>' +
-        '</div>' +
-        '<div class="card">' +
-          '<ul class="land-list" style="margin-bottom:18px;">' +
+        '<div class="card reveal-after-count" id="pricingReveal" style="opacity:0;">' +
+          '<div class="price-hero" style="margin:-4px 0 18px;">' +
+            '<div class="price-rupee">&#8377;' + D.PLANS.trialDueToday + '</div>' +
+            '<p class="price-label">to start hiring today</p>' +
+          '</div>' +
+          '<ul class="land-list" style="margin-bottom:16px;">' +
             '<li>AI calls and screens candidates by voice before you see them</li>' +
-            '<li>Review up to 30 verified profiles, in batches of 10</li>' +
-            '<li>Call candidates through the platform &mdash; your number stays private</li>' +
-            '<li>Trial ends once you shortlist 3, review all 30, or after 7 days</li>' +
+            '<li>Review up to 30 verified profiles &mdash; call via platform, your number stays private</li>' +
           '</ul>' +
           '<div class="flat-fee-note" style="margin-bottom:16px;">Renews at &#8377;' + D.PLANS.trialRenewalAmount.toLocaleString("en-IN") + '/month only if you continue &mdash; one flat fee, no commission on salary.</div>' +
           '<button class="btn primary full" data-action="goto-login">Start Hiring @ &#8377;' + D.PLANS.trialDueToday + ' &rarr;</button>' +
@@ -85,11 +66,11 @@
     );
   }
 
-  // ---------------- Step 4: login ----------------
+  // ---------------- Step 3: login ----------------
   function renderLoginStep() {
     return (
       '<div class="onb-wrap flow-step">' +
-        '<div class="flow-progress">Step 4 of 6 &middot; Verify your number</div>' +
+        '<div class="flow-progress">Step 3 of 4 &middot; Verify your number</div>' +
         '<div class="onb-logo">W</div>' +
         '<h1 class="onb-title">Verify your mobile number</h1>' +
         '<p class="onb-sub">We\'ll use this to send candidate updates &mdash; no email signup, no password.</p>' +
@@ -102,57 +83,118 @@
     );
   }
 
-  // ---------------- Step 5: AI job posting ----------------
+  // ---------------- Step 4: job + company, one step, with a progress bar ----------------
+  // Condensed on purpose: a hiring manager in a hurry shouldn't read a page
+  // of instructions. Chips instead of paragraphs, icons instead of labels
+  // wherever a glance says more than a sentence. Company profile fields are
+  // folded into the same step instead of a separate screen.
   function renderJobPostingAI() {
     var st = S.get();
     var spec = D.suggestJobSpec(st.searchRole);
     return (
-      '<div class="onb-wrap flow-step">' +
-        '<div class="flow-progress">Step 5 of 6 &middot; AI-generated job post</div>' +
-        '<h1 class="onb-title">We\'ve drafted your job post</h1>' +
-        '<p class="onb-sub">From just the role and city, here\'s what AI filled in. Edit anything before it goes live.</p>' +
+      '<div class="onb-wrap flow-step" style="max-width:640px;">' +
+        '<div class="post-progress-head">' +
+          '<div class="post-progress-label"><span>Almost live</span><span id="postPct">60%</span></div>' +
+          '<div class="progress-bar-track"><div class="progress-bar-fill" id="postProgressFill" style="width:60%"></div></div>' +
+        '</div>' +
         '<form id="postingForm" class="card">' +
-          '<div class="ai-badge-row">&#10024; AI-generated from "' + esc(st.searchRole) + '" in ' + esc(st.searchCity) + '"</div>' +
+          '<div class="ai-badge-row">&#10024; AI-drafted for ' + esc(st.searchRole) + ' &middot; ' + esc(st.searchCity) + '</div>' +
+
+          '<div class="field-mini-label">Your company</div>' +
           '<div class="row">' +
-            '<div class="field" style="flex:1"><label>Experience</label><input name="experience" type="text" value="' + spec.experience + '"></div>' +
-            '<div class="field" style="flex:1"><label>Education</label><input name="education" type="text" value="' + spec.education + '"></div>' +
+            '<div class="field" style="flex:1.3"><input name="company" type="text" placeholder="Company name" value="Kapoor Logistics" required></div>' +
+            '<div class="field" style="flex:1"><select name="industry">' +
+              ['Logistics', 'Retail', 'Hospitality', 'BPO / Telecalling', 'Manufacturing', 'Other'].map(function (o) { return '<option' + (o === "Logistics" ? ' selected' : '') + '>' + o + '</option>'; }).join("") +
+            '</select></div>' +
           '</div>' +
           '<div class="row">' +
-            '<div class="field" style="flex:1"><label>Gender preference</label><input name="gender" type="text" value="' + spec.gender + '"></div>' +
-            '<div class="field" style="flex:1"><label>English required</label><input name="english" type="text" value="' + spec.english + '"></div>' +
+            '<div class="field" style="flex:1"><select name="companySize">' +
+              ['1–10 employees', '11–50 employees', '51–200 employees', '200+ employees'].map(function (o) { return '<option>' + o + '</option>'; }).join("") +
+            '</select></div>' +
+            '<div class="field" style="flex:1"><input name="companyLocation" type="text" placeholder="Office location" value="' + esc(st.searchCity) + '"></div>' +
+          '</div>' +
+
+          '<div class="field-mini-label">Job requirements</div>' +
+          '<div class="chip-field-row">' +
+            chipField("experience", spec.experience, ["0–1 years", "0–2 years", "1–3 years", "3–5 years"]) +
+            chipField("education", spec.education, ["No minimum", "10th pass", "12th pass", "Graduate"]) +
+          '</div>' +
+          '<div class="chip-field-row">' +
+            chipField("gender", spec.gender, ["Any", "Male preferred", "Female preferred"]) +
+            chipField("english", spec.english, ["Not required", "Basic English", "Fluent English"]) +
           '</div>' +
           '<div class="row">' +
-            '<div class="field" style="flex:1"><label>Salary min (&#8377;/month)</label><input name="salaryMin" type="number" value="' + spec.salaryMin + '"></div>' +
-            '<div class="field" style="flex:1"><label>Salary max (&#8377;/month)</label><input name="salaryMax" type="number" value="' + spec.salaryMax + '"></div>' +
-          '</div>' +
-          '<div class="row">' +
+            '<div class="field" style="flex:1"><label>Salary &#8377;/month</label>' +
+              '<div class="row" style="gap:6px;"><input name="salaryMin" type="number" value="' + spec.salaryMin + '" style="width:50%"> <input name="salaryMax" type="number" value="' + spec.salaryMax + '" style="width:50%"></div>' +
+            '</div>' +
             '<div class="field" style="flex:1"><label>Openings</label><input name="openings" type="number" value="2" required></div>' +
-            '<div class="field" style="flex:1"><label>Company name</label><input name="company" type="text" placeholder="e.g. Kapoor Logistics" value="Kapoor Logistics" required></div>' +
           '</div>' +
-          '<button type="submit" class="btn primary full">Post job &amp; see hot leads &rarr;</button>' +
+
+          '<button type="submit" class="btn primary full">Make job live &rarr;</button>' +
         '</form>' +
       '</div>'
     );
   }
 
-  // ---------------- Step 6: hot leads preview ----------------
+  function chipField(name, selected, options) {
+    return '<div class="field" style="flex:1">' +
+      '<input type="hidden" name="' + name + '" value="' + esc(selected) + '">' +
+      '<div class="chip-opts" data-chip-group="' + name + '">' +
+        options.map(function (o) {
+          return '<button type="button" class="chip-opt' + (o === selected ? ' active' : '') + '" data-chip-value="' + esc(o) + '">' + o + '</button>';
+        }).join("") +
+      '</div>' +
+    '</div>';
+  }
+
+  // ---------------- Step: matching loader (auto-advances) ----------------
+  function renderMatchingLoader() {
+    return (
+      '<div class="onb-wrap flow-step" style="text-align:center;">' +
+        '<div class="match-spinner"></div>' +
+        '<h1 class="onb-title" style="margin-top:22px;">Finding relevant matches for your requirement&hellip;</h1>' +
+        '<p class="onb-sub">AI is calling candidates nearby right now to confirm availability and pay fit.</p>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- Step: hot leads (dashboard of leads relevant to this job) ----------------
   function renderHotLeadsStep() {
     var leads = D.CANDIDATE_POOL.slice(0, 3);
     return (
-      '<div class="onb-wrap flow-step" style="max-width:560px;">' +
-        '<div class="flow-progress">Step 6 of 6 &middot; Your hot leads</div>' +
+      '<div class="onb-wrap flow-step" style="max-width:600px;">' +
+        '<div class="flow-progress">Your job is live &middot; hot leads ready</div>' +
         '<h1 class="onb-title">AI already called 3 candidates for you</h1>' +
-        '<p class="onb-sub">Listen to how the screening call went before you commit to a full batch.</p>' +
-        leads.map(function (c) {
-          return '<div class="cand-card done" style="margin-bottom:14px;">' +
-            '<div class="cand-top">' +
-              '<div><div class="cand-name">' + esc(c.name) + '</div><div class="cand-meta">' + c.age + 'y &middot; ' + c.area + ' (' + c.distanceKm + ' km) &middot; ' + c.experienceYears + ' yrs exp</div></div>' +
-              '<span class="badge-ai">&#10024; Hot lead</span>' +
-            '</div>' +
-            renderCallRecording(c) +
-          '</div>';
-        }).join("") +
+        '<p class="onb-sub">Listen to the real screening call before you commit to a full batch.</p>' +
+        leads.map(function (c) { return renderLeadCard(c); }).join("") +
         '<button class="btn primary full" data-action="start-trial">Start my trial &amp; review all candidates &rarr;</button>' +
+      '</div>'
+    );
+  }
+
+  // ---------------- Naukri-style rich candidate/lead card ----------------
+  function avatarInitials(name) {
+    var parts = String(name).split(" ");
+    return (parts[0] ? parts[0][0] : "") + (parts[1] ? parts[1][0] : "");
+  }
+
+  function renderLeadCard(c) {
+    return (
+      '<div class="lead-card">' +
+        '<div class="lead-top">' +
+          '<div class="lead-avatar">' + avatarInitials(c.name) + '</div>' +
+          '<div class="lead-id">' +
+            '<div class="lead-name">' + esc(c.name) + ' <span class="badge-ai">&#10024; AI-verified</span></div>' +
+            '<div class="lead-meta">' + c.age + ' yrs &middot; ' + c.experienceYears + ' yrs exp &middot; ' + c.area + ' (' + c.distanceKm + ' km away)</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="skills-row">' + c.skills.map(function (s) { return '<span class="skill-tag">' + s + '</span>'; }).join("") + '</div>' +
+        '<div class="ai-facts">' +
+          '<div class="ai-fact"><span class="dot2"></span><span><b>' + c.availability + '</b></span></div>' +
+          '<div class="ai-fact"><span class="dot2"></span><span>Expects &#8377;' + c.payExpectationMin.toLocaleString("en-IN") + '&ndash;&#8377;' + c.payExpectationMax.toLocaleString("en-IN") + '</span></div>' +
+          '<div class="ai-fact"><span class="dot2"></span><span>' + c.language + '</span></div>' +
+        '</div>' +
+        renderCallRecording(c) +
       '</div>'
     );
   }
@@ -213,14 +255,22 @@
   }
 
   // ---------------- AI screening call recording (per candidate card) ----------------
+  // c.audioFile set (cand-1/2/3 only) → a real <audio> element with actual
+  // synthesized speech (Hindi / Kannada / English placeholder voices) drives
+  // playback and the transcript highlight is synced to real audio.currentTime.
+  // Everyone else keeps the simulated progress-bar playback.
   function renderCallRecording(c) {
     var dur = c.callDurationSec || 45;
+    var isReal = !!c.audioFile;
     var transcriptLines = (c.callTranscript || []).map(function (line, idx) {
+      var translation = (isReal && line.t_en && line.t_en !== line.t) ? '<span class="rec-translit">' + line.t_en + '</span>' : "";
       return '<div class="rec-line ' + line.who + '" id="recline-' + c.id + '-' + idx + '">' +
         '<span class="rec-who">' + (line.who === "ai" ? "AI" : c.name.split(" ")[0]) + '</span>' +
-        '<span class="rec-text">' + line.t + '</span>' +
+        '<span class="rec-text">' + line.t + translation + '</span>' +
       '</div>';
     }).join("");
+
+    var langBadge = isReal ? '<span class="lang-badge">&#127908; ' + c.audioLang.toUpperCase() + ' &middot; real audio sample</span>' : "";
 
     return (
       '<div class="call-rec" data-cand="' + c.id + '">' +
@@ -231,6 +281,8 @@
         '</div>' +
         '<button class="rec-transcript-btn" data-action="toggle-transcript" data-id="' + c.id + '">Transcript</button>' +
       '</div>' +
+      langBadge +
+      (isReal ? '<audio id="recAudio-' + c.id + '" src="' + c.audioFile + '" preload="none"></audio>' : "") +
       '<div class="rec-transcript" id="transcript-' + c.id + '" style="display:none;">' + transcriptLines + '</div>'
     );
   }
@@ -265,12 +317,17 @@
       var isRejected = st.rejectedIds.indexOf(c.id) !== -1;
       var isCurrent = i === st.cursorInBatch;
 
+      var isShortlisted = st.shortlistedIds.indexOf(c.id) !== -1;
       var statusRow = "";
       if (isRelevant) {
         var called = st.calledIds.indexOf(c.id) !== -1;
         statusRow = '<div class="unlocked-row"><span>&#128274; Contact unlocked</span>' +
           (called ? '<span class="pill muted">Called</span>' : '<a href="#/calls" class="btn ghost" style="padding:6px 12px;font-size:11.5px;text-decoration:none;">Call via platform &rarr;</a>') +
-        '</div>';
+        '</div>' +
+        (isShortlisted
+          ? '<div class="unlocked-row" style="background:var(--success-light);color:var(--success);"><span>&#11088; Shortlisted</span></div>'
+          : '<button class="btn outline-shortlist full" data-action="shortlist-from-card" data-id="' + c.id + '">&#11088; Shortlist candidate</button>'
+        );
       } else if (isRejected) {
         statusRow = '<div class="unlocked-row" style="background:var(--bg);color:var(--muted);"><span>Marked not relevant</span></div>';
       }
@@ -303,7 +360,39 @@
           '<div><p class="section-title" style="margin-bottom:2px;">' + batchLabel + '</p><p class="section-sub" style="margin-bottom:0;">AI pre-screened by voice before you see them &mdash; mark Relevant to unlock contact.</p></div>' +
           '<span class="pill muted">' + st.cursorInBatch + '/10 reviewed this batch</span>' +
         '</div>' +
+        '<div class="trial-shortlist-note">You can shortlist up to <b>' + D.SHORTLIST_TARGET + ' candidates</b> on this trial &middot; ' + st.shortlistedIds.length + '/' + D.SHORTLIST_TARGET + ' used</div>' +
         '<div class="cand-grid">' + cards + '</div>' +
+        (st.showPaywall ? renderPaywall() : "") +
+      '</div>'
+    );
+  }
+
+  // ---------------- Paywall modal (shown past the trial shortlist cap) ----------------
+  function renderPaywall() {
+    var tiers = D.PLANS.tiers;
+    return (
+      '<div class="call-overlay" data-action-bg="close-paywall">' +
+        '<div class="paywall-panel">' +
+          '<button class="paywall-close" data-action="close-paywall" aria-label="Close">&times;</button>' +
+          '<p class="section-title">You\'ve used all 3 trial shortlists</p>' +
+          '<p class="section-sub" style="margin-bottom:18px;">Keep hiring beyond the trial with a flat-fee plan &mdash; no commission on salary, ever.</p>' +
+          '<div class="paywall-grid">' +
+            tiers.map(function (t) {
+              return '<div class="paywall-card' + (t.popular ? " popular" : "") + '">' +
+                (t.popular ? '<div class="paywall-pop">&#9733; Most Popular</div>' : "") +
+                '<div class="paywall-name">' + t.name + '</div>' +
+                '<div class="paywall-price">&#8377;' + t.perMonth.toLocaleString("en-IN") + '<span>/month</span></div>' +
+                '<div class="paywall-upfront">Pay upfront: &#8377;' + t.payUpfront.toLocaleString("en-IN") + '</div>' +
+                '<button class="btn ' + (t.popular ? "primary" : "ghost") + ' full" data-action="subscribe-tier" data-id="' + t.id + '" style="margin:10px 0 12px;">Start immediately</button>' +
+                '<ul class="paywall-feats">' +
+                  '<li>Unlock ' + t.unlocks + ' candidate profiles</li>' +
+                  '<li>Boost job up to ' + t.boosts + ' times</li>' +
+                  '<li>Valid for ' + t.validDays + ' days' + (t.note ? ' &middot; ' + t.note : '') + '</li>' +
+                '</ul>' +
+              '</div>';
+            }).join("") +
+          '</div>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -337,6 +426,7 @@
         '</div>' +
         (called.length ? '<div class="card"><p class="section-title">Call history</p>' + called.map(function (id) { return row(id, "done"); }).join("") + '</div>' : "") +
         (st.callOverlayFor ? renderCallOverlay(byId[st.callOverlayFor]) : "") +
+        (st.showPaywall ? renderPaywall() : "") +
       '</div>'
     );
   }
@@ -473,9 +563,9 @@
   global.WI_VIEWS = {
     search: renderJobSearch,
     count: renderCandidateCount,
-    pricing: renderPricingTeaser,
     login: renderLoginStep,
     posting: renderJobPostingAI,
+    matching: renderMatchingLoader,
     hotleads: renderHotLeadsStep,
     dashboard: renderDashboard,
     candidates: renderCandidates,

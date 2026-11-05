@@ -240,3 +240,46 @@ a { color: var(--primary); }
 .price-rupee { font-size: 52px; font-weight: 800; color: var(--primary); line-height: 1; }
 .price-label { font-size: 14px; color: var(--muted); margin-top: 6px; }
 .ai-badge-row { font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-light); border-radius: 8px; padding: 9px 12px; margin-bottom: 16px; }
+
+/* ============ Condensed job-posting step (chips + company profile + progress) ============ */
+.post-progress-head { margin-bottom: 14px; }
+.post-progress-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.post-progress-label span:last-child { color: var(--primary); }
+.field-mini-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 14px 0 8px; }
+.field-mini-label:first-of-type { margin-top: 0; }
+.chip-field-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.chip-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-opt { border: 1.5px solid var(--border); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.chip-opt.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* ============ Matching loader ============ */
+.match-spinner { width: 46px; height: 46px; border-radius: 50%; border: 4px solid var(--border); border-top-color: var(--primary); margin: 30px auto 0; animation: match-spin .8s linear infinite; }
+@keyframes match-spin { to { transform: rotate(360deg); } }
+
+/* ============ Naukri-style rich lead card (hot leads step) ============ */
+.lead-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+.lead-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.lead-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.lead-name { font-weight: 700; font-size: 14.5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lead-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.lang-badge { display: inline-block; font-size: 10.5px; font-weight: 700; color: var(--primary); background: var(--primary-light); border-radius: 999px; padding: 3px 9px; margin: 2px 0 4px; }
+.rec-translit { display: block; font-size: 11px; color: var(--muted); font-style: italic; margin-top: 1px; }
+
+/* ============ Shortlist cap + paywall ============ */
+.trial-shortlist-note { font-size: 12.5px; color: var(--muted); background: var(--bg-soft, var(--bg)); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; margin: 4px 0 14px; }
+.btn.outline-shortlist { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); margin-top: 8px; }
+.paywall-panel { background: #fff; border-radius: 14px; padding: 26px; max-width: 760px; width: 94vw; max-height: 86vh; overflow-y: auto; position: relative; }
+.paywall-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1; }
+.paywall-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 4px; }
+.paywall-card { border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; position: relative; }
+.paywall-card.popular { border-color: var(--success); }
+.paywall-pop { position: absolute; top: -11px; right: 12px; background: var(--success); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+.paywall-name { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.paywall-price { font-size: 22px; font-weight: 800; color: var(--ink); }
+.paywall-price span { font-size: 12px; font-weight: 500; color: var(--muted); }
+.paywall-upfront { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.paywall-feats { list-style: none; margin: 0; padding: 0; font-size: 12px; color: var(--ink); display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 760px) {
+  .paywall-grid { grid-template-columns: 1fr; }
+  .chip-field-row { flex-direction: column; }
+}

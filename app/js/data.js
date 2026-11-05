@@ -34,6 +34,62 @@
 
   function pick(arr, rnd) { return arr[Math.floor(rnd() * arr.length)]; }
 
+  // Real (synthesized placeholder) call-recording audio exists for the
+  // first 3 candidates only — one Hindi, one Kannada, one English, so
+  // recruiters hear actual voices in at least one of each. AUDIO_MANIFEST
+  // is loaded separately from audio/manifest.json at runtime (see data.js
+  // bottom) and merged in before CANDIDATE_POOL is exposed.
+  var AUDIO_OVERRIDES = {
+    "cand-1": { name: "Suresh Kumar", role: "Delivery Executive", city: "Mumbai", lang: "Hindi" },
+    "cand-2": { name: "Pooja M.", role: "Retail Associate", city: "Bengaluru", lang: "Kannada" },
+    "cand-3": { name: "Altaf Raza", role: "Security Guard", city: "Delhi NCR", lang: "English" }
+  };
+
+  var CALL_AUDIO = {
+  "cand-1": {
+    "lang": "hi",
+    "file": "audio/cand-1.mp3",
+    "duration": 27.44,
+    "lines": [
+      { "who": "ai", "t": "नमस्ते, मैं वर्क इंडिया से बोल रहा हूँ। क्या आप डिलीवरी एग्जीक्यूटिव की नौकरी के लिए उपलब्ध हैं?", "t_en": "Hi, this is WorkIndia calling. Are you available for the Delivery Executive job?", "start": 0.0, "end": 7.64 },
+      { "who": "candidate", "t": "हाँ जी, मैं उपलब्ध हूँ।", "t_en": "Yes, I'm available.", "start": 8.09, "end": 10.1 },
+      { "who": "ai", "t": "आप कब से शुरू कर सकते हैं?", "t_en": "When can you start?", "start": 10.55, "end": 13.08 },
+      { "who": "candidate", "t": "मैं कल से शुरू कर सकता हूँ।", "t_en": "I can start from tomorrow.", "start": 13.53, "end": 15.85 },
+      { "who": "ai", "t": "आपकी सैलरी की उम्मीद क्या है?", "t_en": "What's your salary expectation?", "start": 16.3, "end": 19.09 },
+      { "who": "candidate", "t": "सोलह हज़ार से अठारह हज़ार रुपये महीना।", "t_en": "Sixteen to eighteen thousand rupees a month.", "start": 19.54, "end": 22.64 },
+      { "who": "ai", "t": "धन्यवाद, मैं यह जानकारी एम्प्लॉयर को भेज दूंगा।", "t_en": "Thank you, I'll pass this on to the employer.", "start": 23.1, "end": 27.0 }
+    ]
+  },
+  "cand-2": {
+    "lang": "kn",
+    "file": "audio/cand-2.mp3",
+    "duration": 32.46,
+    "lines": [
+      { "who": "ai", "t": "ನಮಸ್ಕಾರ, ನಾನು ವರ್ಕ್ ಇಂಡಿಯಾದಿಂದ ಕರೆ ಮಾಡುತ್ತಿದ್ದೇನೆ. ನೀವು ರಿಟೇಲ್ ಅಸೋಸಿಯೇಟ್ ಹುದ್ದೆಗೆ ಲಭ್ಯವಿದ್ದೀರಾ?", "t_en": "Hello, this is WorkIndia calling. Are you available for the Retail Associate role?", "start": 0.0, "end": 8.59 },
+      { "who": "candidate", "t": "ಹೌದು, ನಾನು ಲಭ್ಯವಿದ್ದೇನೆ.", "t_en": "Yes, I'm available.", "start": 9.04, "end": 11.52 },
+      { "who": "ai", "t": "ನೀವು ಯಾವಾಗ ಕೆಲಸ ಪ್ರಾರಂಭಿಸಬಹುದು?", "t_en": "When can you start?", "start": 11.97, "end": 15.5 },
+      { "who": "candidate", "t": "ನಾನು ಸೋಮವಾರದಿಂದ ಪ್ರಾರಂಭಿಸಬಹುದು.", "t_en": "I can start from Monday.", "start": 15.95, "end": 19.16 },
+      { "who": "ai", "t": "ನಿಮ್ಮ ಸಂಬಳದ ನಿರೀಕ್ಷೆ ಏನು?", "t_en": "What's your salary expectation?", "start": 19.61, "end": 22.22 },
+      { "who": "candidate", "t": "ಹದಿನೈದು ಸಾವಿರದಿಂದ ಹದಿನೆಂಟು ಸಾವಿರ ರೂಪಾಯಿ.", "t_en": "Fifteen to eighteen thousand rupees.", "start": 22.67, "end": 26.51 },
+      { "who": "ai", "t": "ಧನ್ಯವಾದಗಳು, ನಾನು ಇದನ್ನು ಉದ್ಯೋಗದಾತರಿಗೆ ತಿಳಿಸುತ್ತೇನೆ.", "t_en": "Thank you, I'll let the employer know.", "start": 26.95, "end": 32.01 }
+    ]
+  },
+  "cand-3": {
+    "lang": "en",
+    "file": "audio/cand-3.mp3",
+    "duration": 24.41,
+    "lines": [
+      { "who": "ai", "t": "Hi, this is WorkIndia calling on behalf of an employer hiring for a Security Guard role. Are you available?", "t_en": "Hi, this is WorkIndia calling on behalf of an employer hiring for a Security Guard role. Are you available?", "start": 0.0, "end": 6.97 },
+      { "who": "candidate", "t": "Yes sir, I am available.", "t_en": "Yes sir, I am available.", "start": 7.42, "end": 9.32 },
+      { "who": "ai", "t": "When can you start?", "t_en": "When can you start?", "start": 9.77, "end": 11.21 },
+      { "who": "candidate", "t": "I can start from tomorrow.", "t_en": "I can start from tomorrow.", "start": 11.66, "end": 13.46 },
+      { "who": "ai", "t": "What salary are you expecting?", "t_en": "What salary are you expecting?", "start": 13.91, "end": 15.98 },
+      { "who": "candidate", "t": "Around fourteen to seventeen thousand rupees per month.", "t_en": "Around fourteen to seventeen thousand rupees per month.", "start": 16.43, "end": 19.8 },
+      { "who": "ai", "t": "Great, thank you. I'll pass this on to the employer.", "t_en": "Great, thank you. I'll pass this on to the employer.", "start": 20.25, "end": 23.96 }
+    ]
+  }
+  };
+
   function buildCandidatePool(count) {
     var rnd = seededRandom(42);
     var pool = [];
@@ -61,34 +117,44 @@
         { who: "ai", t: "Great — thanks, I'll pass this on to the employer." }
       ];
 
+      var id = "cand-" + (i + 1);
+      var override = AUDIO_OVERRIDES[id];
+      var audio = CALL_AUDIO[id];
+
       pool.push({
-        id: "cand-" + (i + 1),
-        name: name,
+        id: id,
+        name: override ? override.name : name,
         age: 21 + Math.floor(rnd() * 20),
-        area: area,
+        area: override ? override.city : area,
         distanceKm: distKm,
         experienceYears: exp,
         education: rnd() < 0.7 ? "< 10th Pass" : "10th Pass",
         skills: skills,
-        language: language,
+        language: override ? override.lang + " (real sample recording)" : language,
         availability: availability,
         payExpectationMin: payMin,
         payExpectationMax: payMax,
         aiCallSummary: "AI confirmed availability and pay fit by voice call before this profile was shown.",
         aiScreenPassed: true,
-        callDurationSec: 38 + Math.floor(rnd() * 25),
-        callTranscript: transcript
+        callDurationSec: audio ? Math.ceil(audio.duration) : 38 + Math.floor(rnd() * 25),
+        callTranscript: audio ? audio.lines : transcript,
+        audioFile: audio ? audio.file : null,
+        audioLang: audio ? audio.lang : null
       });
     }
     return pool;
   }
 
+  // Mirrors the real WorkIndia employer pricing (Single Hire tab), as shown
+  // on the live plans page — not invented numbers.
   var PLANS = {
     trialDueToday: 1,
-    trialRenewalAmount: 2948,
-    monthly: 2499,
-    quarterlyPerMonth: 1666,
-    yearlyPerMonth: 916
+    trialRenewalAmount: 2499,
+    tiers: [
+      { id: "1m", name: "1 Month", perMonth: 2499, payUpfront: 2499, validDays: 30, unlocks: 100, boosts: 3, note: null },
+      { id: "3m", name: "3 Months", perMonth: 1666, payUpfront: 4999, validDays: 95, unlocks: 300, boosts: 9, note: "Get 5 extra days" },
+      { id: "12m", name: "1 Year", perMonth: 916, payUpfront: 11000, validDays: 372, unlocks: 800, boosts: 24, note: "Get 7 extra days", popular: true }
+    ]
   };
 
   var ROLE_SUGGESTIONS = ["Delivery Executive", "Driver", "Security Guard", "Telecaller", "Retail Associate",
@@ -125,6 +191,19 @@
     return spec;
   }
 
+  var CATEGORIES = [
+    { name: "Delivery", icon: "🛵", role: "Delivery Executive" },
+    { name: "Retail", icon: "🛍️", role: "Retail Associate" },
+    { name: "Hospitality", icon: "🍽️", role: "Housekeeping Staff" },
+    { name: "Telecalling", icon: "📞", role: "Telecaller" },
+    { name: "Sales", icon: "📈", role: "Field Sales Executive" },
+    { name: "Back office", icon: "🗂️", role: "Back Office Executive" },
+    { name: "Drivers", icon: "🚗", role: "Driver" },
+    { name: "Security", icon: "🛡️", role: "Security Guard" },
+    { name: "Housekeeping", icon: "🧹", role: "Housekeeping Staff" },
+    { name: "Technicians", icon: "🔧", role: "Technician" }
+  ];
+
   global.WI_DATA = {
     CANDIDATE_POOL: buildCandidatePool(30),
     BATCH_SIZE: 10,
@@ -134,6 +213,7 @@
     PLANS: PLANS,
     ROLE_SUGGESTIONS: ROLE_SUGGESTIONS,
     CITY_SUGGESTIONS: CITY_SUGGESTIONS,
+    CATEGORIES: CATEGORIES,
     estimateCandidateCount: estimateCandidateCount,
     suggestJobSpec: suggestJobSpec
   };
