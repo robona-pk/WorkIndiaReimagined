@@ -15,10 +15,53 @@
     return (m < 10 ? "0" + m : m) + ":" + (ss < 10 ? "0" + ss : ss);
   }
 
+  // ---------------- Landing (context first) ----------------
+  function renderLanding() {
+    return (
+      '<div class="land-wrap">' +
+        '<div class="land-hero">' +
+          '<span class="land-kicker">WorkIndia &middot; Employer trial, reimagined</span>' +
+          '<h1>What this prototype is</h1>' +
+          '<p class="land-sub">This is a working mockup of a redesigned employer trial for WorkIndia (blue/grey-collar hiring: delivery, drivers, warehouse, field staff). It is not live on workindia.in &mdash; it is a front-end-only demo built to show a different way of running the free trial, grounded in real data below.</p>' +
+        '</div>' +
+
+        '<div class="land-section">' +
+          '<h2>The problem today</h2>' +
+          '<div class="land-stat-grid">' +
+            '<div class="land-stat"><div class="num">~1%</div><div class="lbl">conversion on telesales-acquired employers &mdash; a volume-only channel</div></div>' +
+            '<div class="land-stat"><div class="num">67%</div><div class="lbl">of job postings happen via an agent on the employer\'s behalf &mdash; the employer never visits the platform</div></div>' +
+            '<div class="land-stat"><div class="num">78.5%</div><div class="lbl">of employers never unlock a single candidate during their trial</div></div>' +
+            '<div class="land-stat"><div class="num">10.3&times;</div><div class="lbl">higher conversion for employers who visited, got responses, <em>and</em> used an unlock &mdash; vs. the largest passive cohort</div></div>' +
+          '</div>' +
+          '<p class="land-note">A live walkthrough of the real employer flow (OTP login through to job posting) surfaced more: trial pricing copy that discourages trying the trial in the first place, a second trial-vs-skip prompt re-asked at checkout, and a stray "wallet balance low, job rejected" message on a brand-new trial account that is actually just pending a routine fraud/KYC check.</p>' +
+        '</div>' +
+
+        '<div class="land-section">' +
+          '<h2>What this prototype changes</h2>' +
+          '<ul class="land-list">' +
+            '<li><strong>AI voice pre-screen before you ever see a profile.</strong> Availability, pay expectation, location and language are confirmed by an AI call first &mdash; what you see is a verified card, not a raw resume.</li>' +
+            '<li><strong>Mark Relevant to unlock contact.</strong> No swipe-and-hope &mdash; WorkIndia tried pure profile swiping before and it failed in UAT because employers couldn\'t judge fit without a call.</li>' +
+            '<li><strong>A fixed, rationed batch of candidates</strong> (30 total, 10 at a time) instead of unlimited browsing against a 197,000-candidate database you can\'t touch.</li>' +
+            '<li><strong>Calling happens inside the platform only, masked</strong> &mdash; Uber-style &mdash; and a call only counts once it actually connects.</li>' +
+            '<li><strong>The trial ends on outcome, not just time:</strong> 3 candidates shortlisted, or the 30-profile allocation used up, or 7 days &mdash; whichever comes first.</li>' +
+            '<li><strong>A post-hire feedback loop</strong> that doesn\'t exist today &mdash; once a hire is confirmed, the employer is asked to rate it.</li>' +
+            '<li><strong>The ₹2,948/month autopay mandate is unchanged</strong> &mdash; this redesign doesn\'t touch that. It just shows the employer evidence of what the trial delivered at that moment, instead of a silent charge.</li>' +
+          '</ul>' +
+        '</div>' +
+
+        '<div class="land-cta">' +
+          '<button class="btn primary" data-action="go-onboarding">See it as an employer &rarr;</button>' +
+          '<span class="hint">You\'ll post one job and walk through the whole trial, start to finish.</span>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   // ---------------- Onboarding ----------------
   function renderOnboarding() {
     return (
       '<div class="onb-wrap">' +
+        '<button class="onb-back" data-action="go-landing">&larr; Back to overview</button>' +
         '<div class="onb-logo">W</div>' +
         '<h1 class="onb-title">Post your first job</h1>' +
         '<p class="onb-sub">One screen. Phone verifies in the background while you describe the role &mdash; no six-step queue.</p>' +
@@ -332,6 +375,7 @@
   }
 
   global.WI_VIEWS = {
+    landing: renderLanding,
     onboarding: renderOnboarding,
     dashboard: renderDashboard,
     candidates: renderCandidates,
