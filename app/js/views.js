@@ -180,10 +180,7 @@
 
           '<label class="id-verify-toggle">' +
             '<input type="checkbox" name="idVerificationRequired">' +
-            '<span class="id-verify-toggle-text">' +
-              '<span class="id-verify-toggle-title">&#128274; Require Aadhaar/PAN verification to apply</span>' +
-              '<span class="id-verify-toggle-sub">Only candidates who&rsquo;ve verified their identity can apply to this job &mdash; cuts down fake or duplicate applications.</span>' +
-            '</span>' +
+            '<span class="id-verify-toggle-title">Require Aadhaar/PAN verification to apply</span>' +
           '</label>' +
 
           '<button type="submit" class="btn primary full">Make job live &rarr;</button>' +
