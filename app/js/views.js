@@ -131,43 +131,26 @@
     );
   }
 
-  // ---------------- Step 3: quick "how this works" explainer ----------------
-  // Shown once, right after OTP verification and before the job-posting
-  // form. Without this, a recruiter who's just verified their number lands
-  // straight on a job form, then straight on "AI already called 3
-  // candidates" with no idea why — this closes that gap in four short,
-  // icon-led beats instead of paragraphs.
-  function renderIntro() {
+  // A one-line "what happens next" strip — icons + arrows, no paragraphs.
+  // Folded directly into the posting step (not its own screen) so a
+  // recruiter understands why "AI already called 3 candidates" shows up
+  // later, without adding to the onboarding step count.
+  function renderHowItWorksStrip() {
     var steps = [
-      { icon: "&#128221;", title: "Post your requirement", sub: "Role, city, pay &mdash; under a minute." },
-      { icon: "&#128222;", title: "AI calls candidates for you", sub: "Confirms availability &amp; pay fit by voice, automatically." },
-      { icon: "&#9989;", title: "You see only screened matches", sub: "Review AI-verified profiles, unlock contact in one tap." },
-      { icon: "&#129309;", title: "Hire &amp; pay one flat fee", sub: "No commission on salary, ever." }
+      { icon: "&#128221;", label: "Post job" },
+      { icon: "&#128222;", label: "AI calls candidates" },
+      { icon: "&#9989;", label: "You see matches" },
+      { icon: "&#129309;", label: "Hire, flat fee" }
     ];
-    return (
-      '<div class="onb-wrap flow-step" style="max-width:380px;">' +
-        '<div class="onb-logo">W</div>' +
-        '<h1 class="onb-title">Here&rsquo;s how this works</h1>' +
-        '<p class="onb-sub">Four steps, start to hire.</p>' +
-        '<div class="intro-steps">' +
-          steps.map(function (s, i) {
-            var connector = i < steps.length - 1
-              ? '<div class="intro-step-connector" style="animation-delay:' + (i * 0.22 + 0.12) + 's"></div>'
-              : '';
-            return (
-              '<div class="intro-step" style="animation-delay:' + (i * 0.22) + 's">' +
-                '<div class="intro-step-icon">' + s.icon + '</div>' +
-                '<div class="intro-step-text"><div class="intro-step-title">' + s.title + '</div><div class="intro-step-sub">' + s.sub + '</div></div>' +
-              '</div>' + connector
-            );
-          }).join("") +
-        '</div>' +
-        '<button class="btn primary full" data-action="dismiss-intro" style="margin-top:20px;">Got it, let&rsquo;s post your job &rarr;</button>' +
-      '</div>'
-    );
+    return '<div class="hiw-strip">' +
+      steps.map(function (s, i) {
+        return '<span class="hiw-step"><span class="hiw-icon">' + s.icon + '</span>' + s.label + '</span>' +
+          (i < steps.length - 1 ? '<span class="hiw-arrow">&rarr;</span>' : '');
+      }).join('') +
+    '</div>';
   }
 
-  // ---------------- Step 4: job + company, one step, with a progress bar ----------------
+  // ---------------- Step 3: job + company, one step, with a progress bar ----------------
   // Condensed on purpose: a hiring manager in a hurry shouldn't read a page
   // of instructions. Chips instead of paragraphs, icons instead of labels
   // wherever a glance says more than a sentence. Company profile fields are
@@ -177,6 +160,7 @@
     var spec = D.suggestJobSpec(st.searchRole);
     return (
       '<div class="onb-wrap flow-step" style="max-width:640px;">' +
+        renderHowItWorksStrip() +
         '<div class="post-progress-head">' +
           '<div class="post-progress-label"><span>Almost live</span><span id="postPct">60%</span></div>' +
           '<div class="progress-bar-track"><div class="progress-bar-fill" id="postProgressFill" style="width:60%"></div></div>' +
@@ -1224,7 +1208,6 @@
   global.WI_VIEWS = {
     search: renderJobSearch,
     count: renderCandidateCount,
-    intro: renderIntro,
     posting: renderJobPostingAI,
     matching: renderMatchingLoader,
     hotleads: renderHotLeadsStep,

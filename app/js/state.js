@@ -110,7 +110,7 @@
 
     verifyLogin: function (phone) {
       state.phone = phone;
-      state.flowStep = "intro"; // quick "how this works" explainer before the job-posting form
+      state.flowStep = "posting"; // straight to the job form — the "how this works" explainer lives inline on this step, not as its own screen
       save(state);
     },
 
