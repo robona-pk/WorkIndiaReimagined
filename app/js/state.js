@@ -110,7 +110,7 @@
 
     verifyLogin: function (phone) {
       state.phone = phone;
-      state.flowStep = "posting";
+      state.flowStep = "intro"; // quick "how this works" explainer before the job-posting form
       save(state);
     },
 

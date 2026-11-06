@@ -441,6 +441,10 @@
         S.clearCandidateFilters();
         render();
         break;
+      case "dismiss-intro":
+        S.setFlowStep("posting");
+        render();
+        break;
     }
   }
 
