@@ -141,7 +141,7 @@
     var steps = [
       { icon: "&#128221;", label: "Post job" },
       { icon: "&#128222;", label: "AI screens candidates" },
-      { icon: "&#9989;", label: "You see matches" },
+      { icon: "&#9989;", label: "You see relevant matches" },
       { icon: "&#129309;", label: "Hire, flat fee" }
     ];
     return '<div class="hiw-stepper"><div class="hiw-stepper-row">' +
