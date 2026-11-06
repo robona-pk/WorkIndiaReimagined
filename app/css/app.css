@@ -159,6 +159,41 @@ a { color: var(--primary); }
 .cand-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
 .cand-name { font-size: 15.5px; font-weight: 800; }
 .cand-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.cand-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.badge-id-verified { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: #15803D; background: var(--success-light, #DCFCE7); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+
+/* ---- candidate filter bar ---- */
+.cand-filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+.cand-filter-top { display: flex; align-items: center; gap: 10px; }
+.cand-filter-title { font-size: 13px; font-weight: 800; color: var(--ink); }
+.cand-filter-count { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+.cand-filter-clear { font-size: 11.5px; font-weight: 700; color: var(--primary); background: none; border: none; cursor: pointer; padding: 0; }
+.cand-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cand-filter-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; min-width: 72px; }
+.cand-chip { border: 1.5px solid var(--border); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.cand-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.verified-filter-toggle {
+  display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--border); border-radius: 10px;
+  background: var(--bg); padding: 9px 12px; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; width: 100%; text-align: left;
+}
+.verified-filter-toggle.active { border-color: #15803D; background: var(--success-light, #DCFCE7); color: #15803D; }
+.verified-filter-check {
+  width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center; font-size: 11px; flex: 0 0 auto; color: #15803D;
+}
+.verified-filter-toggle.active .verified-filter-check { border-color: #15803D; background: #fff; }
+.verified-filter-sub { font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 2px; }
+.verified-filter-toggle.active .verified-filter-sub { color: #15803D; opacity: .8; }
+
+/* ---- job posting: mandatory ID verification toggle ---- */
+.id-verify-toggle {
+  display: flex; gap: 10px; align-items: flex-start; border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 12px 13px; margin: 4px 0 16px; cursor: pointer; background: var(--bg);
+}
+.id-verify-toggle input[type="checkbox"] { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--primary); flex: 0 0 auto; }
+.id-verify-toggle-text { display: flex; flex-direction: column; gap: 2px; }
+.id-verify-toggle-title { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.id-verify-toggle-sub { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
 .ai-facts { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
 .ai-fact { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; }
 .ai-fact .dot2 { width: 6px; height: 6px; border-radius: 999px; background: var(--success); margin-top: 5px; flex: 0 0 auto; }

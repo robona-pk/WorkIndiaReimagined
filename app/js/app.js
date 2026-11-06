@@ -232,7 +232,8 @@
           salaryMin: fd.get("salaryMin"),
           salaryMax: fd.get("salaryMax"),
           openings: fd.get("openings"),
-          company: fd.get("company")
+          company: fd.get("company"),
+          idVerificationRequired: fd.get("idVerificationRequired") === "on"
         }, {
           industry: fd.get("industry"),
           size: fd.get("companySize"),
@@ -426,6 +427,18 @@
         break;
       case "submit-mock-bad-feedback":
         S.submitMockJobBadFeedback(el.getAttribute("data-job-id"));
+        render();
+        break;
+      case "set-cand-filter":
+        S.setCandidateFilter(el.getAttribute("data-key"), el.getAttribute("data-value"));
+        render();
+        break;
+      case "toggle-verified-filter":
+        S.toggleVerifiedFilter();
+        render();
+        break;
+      case "clear-cand-filters":
+        S.clearCandidateFilters();
         render();
         break;
     }

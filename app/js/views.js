@@ -178,6 +178,14 @@
             '<div class="field" style="flex:1"><label>Openings</label><input name="openings" type="number" value="2" required></div>' +
           '</div>' +
 
+          '<label class="id-verify-toggle">' +
+            '<input type="checkbox" name="idVerificationRequired">' +
+            '<span class="id-verify-toggle-text">' +
+              '<span class="id-verify-toggle-title">&#128274; Require Aadhaar/PAN verification to apply</span>' +
+              '<span class="id-verify-toggle-sub">Only candidates who&rsquo;ve verified their identity can apply to this job &mdash; cuts down fake or duplicate applications.</span>' +
+            '</span>' +
+          '</label>' +
+
           '<button type="submit" class="btn primary full">Make job live &rarr;</button>' +
         '</form>' +
       '</div>'
@@ -359,7 +367,12 @@
       '</div>';
     }
 
+    var filters = st.candidateFilters;
+    var shownCount = 0;
     var cards = batch.map(function (c, i) {
+      if (!candidateMatchesFilters(c, filters)) return null;
+      shownCount++;
+
       var decided = i < st.cursorInBatch;
       var isRelevant = st.relevantIds.indexOf(c.id) !== -1;
       var isRejected = st.rejectedIds.indexOf(c.id) !== -1;
@@ -383,14 +396,17 @@
       return (
         '<div class="cand-card ' + (decided ? "done" : "") + '">' +
           '<div class="cand-top">' +
-            '<div><div class="cand-name">' + esc(c.name) + '</div><div class="cand-meta">' + c.age + 'y &middot; ' + c.area + ' (' + c.distanceKm + ' km) &middot; ' + c.experienceYears + ' yrs exp &middot; ' + c.education + '</div></div>' +
-            '<span class="badge-ai">&#10024; AI-verified</span>' +
+            '<div><div class="cand-name">' + esc(c.name) + '</div><div class="cand-meta">' + c.age + 'y &middot; ' + c.gender + ' &middot; ' + c.area + ' (' + c.distanceKm + ' km) &middot; ' + c.experienceYears + ' yrs exp &middot; ' + c.education + '</div></div>' +
+            '<div class="cand-badges">' +
+              '<span class="badge-ai">&#10024; AI-verified</span>' +
+              (c.verified ? '<span class="badge-id-verified" title="Aadhaar/PAN verified">&#128274; ID Verified</span>' : '') +
+            '</div>' +
           '</div>' +
           '<div class="skills-row">' + c.skills.map(function (s) { return '<span class="skill-tag">' + s + '</span>'; }).join("") + '</div>' +
           '<div class="ai-facts">' +
             '<div class="ai-fact"><span class="dot2"></span><span><b>' + c.availability + '</b></span></div>' +
             '<div class="ai-fact"><span class="dot2"></span><span>Expects &#8377;' + c.payExpectationMin.toLocaleString("en-IN") + '&ndash;&#8377;' + c.payExpectationMax.toLocaleString("en-IN") + '</span></div>' +
-            '<div class="ai-fact"><span class="dot2"></span><span>' + c.language + '</span></div>' +
+            '<div class="ai-fact"><span class="dot2"></span><span>' + c.language + ' &middot; ' + c.englishLevel + '</span></div>' +
           '</div>' +
           renderCallRecording(c) +
           (isCurrent ? '<div class="cand-actions">' +
@@ -400,7 +416,12 @@
           statusRow +
         '</div>'
       );
-    }).join("");
+    }).filter(function (html) { return html; }).join("");
+
+    var filtersActive = filters.verifiedOnly || filters.experience !== "any" || filters.gender !== "any" || filters.english !== "any";
+    var emptyState = (!cards && filtersActive)
+      ? '<div class="locked-banner">No candidates in this batch match your filters. <button class="btn ghost" style="margin-left:8px;padding:6px 12px;font-size:11.5px;" data-action="clear-cand-filters">Clear filters</button></div>'
+      : "";
 
     return (
       '<div>' +
@@ -409,11 +430,72 @@
           '<span class="pill muted">' + st.cursorInBatch + '/10 reviewed this batch</span>' +
         '</div>' +
         '<div class="trial-shortlist-note">You can shortlist up to <b>' + D.SHORTLIST_TARGET + ' candidates</b> on this trial &middot; ' + st.shortlistedIds.length + '/' + D.SHORTLIST_TARGET + ' used</div>' +
-        '<div class="cand-grid">' + cards + '</div>' +
+        renderCandidateFilterBar(st, shownCount, batch.length) +
+        (emptyState || '<div class="cand-grid">' + cards + '</div>') +
         (st.showPaywall ? renderPaywall() : "") +
         (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
     );
+  }
+
+  // Narrows which cards in the current batch are shown. Doesn't touch the
+  // review queue/cursor itself — a filtered-out candidate stays wherever
+  // it is in the sequence, it's just not rendered right now.
+  function candidateMatchesFilters(c, f) {
+    if (f.verifiedOnly && !c.verified) return false;
+    if (f.experience !== "any") {
+      if (f.experience === "0-1" && c.experienceYears > 1) return false;
+      if (f.experience === "1-3" && (c.experienceYears < 1 || c.experienceYears > 3)) return false;
+      if (f.experience === "3-5" && c.experienceYears < 3) return false;
+    }
+    if (f.gender !== "any" && c.gender !== f.gender) return false;
+    if (f.english !== "any" && c.englishLevel !== f.english) return false;
+    return true;
+  }
+
+  function renderCandidateFilterBar(st, shownCount, totalCount) {
+    var f = st.candidateFilters;
+    var activeCount = (f.verifiedOnly ? 1 : 0) + (f.experience !== "any" ? 1 : 0) + (f.gender !== "any" ? 1 : 0) + (f.english !== "any" ? 1 : 0);
+    return (
+      '<div class="cand-filter-bar">' +
+        '<div class="cand-filter-top">' +
+          '<span class="cand-filter-title">Filter candidates</span>' +
+          '<span class="cand-filter-count">' + shownCount + ' of ' + totalCount + ' shown</span>' +
+          (activeCount ? '<button type="button" class="cand-filter-clear" data-action="clear-cand-filters">Clear filters</button>' : '') +
+        '</div>' +
+        '<div class="cand-filter-row">' +
+          '<span class="cand-filter-label">Experience</span>' +
+          candFilterChip("experience", "any", "Any", f.experience) +
+          candFilterChip("experience", "0-1", "0&ndash;1 yrs", f.experience) +
+          candFilterChip("experience", "1-3", "1&ndash;3 yrs", f.experience) +
+          candFilterChip("experience", "3-5", "3+ yrs", f.experience) +
+        '</div>' +
+        '<div class="cand-filter-row">' +
+          '<span class="cand-filter-label">Gender</span>' +
+          candFilterChip("gender", "any", "Any", f.gender) +
+          candFilterChip("gender", "Male", "Male", f.gender) +
+          candFilterChip("gender", "Female", "Female", f.gender) +
+        '</div>' +
+        '<div class="cand-filter-row">' +
+          '<span class="cand-filter-label">English</span>' +
+          candFilterChip("english", "any", "Any", f.english) +
+          candFilterChip("english", "Basic English", "Basic", f.english) +
+          candFilterChip("english", "Fluent English", "Fluent", f.english) +
+        '</div>' +
+        '<div class="cand-filter-row">' +
+          '<button type="button" class="verified-filter-toggle' + (f.verifiedOnly ? ' active' : '') + '" data-action="toggle-verified-filter">' +
+            '<span class="verified-filter-check">' + (f.verifiedOnly ? '&#10003;' : '') + '</span>' +
+            '<span>&#128274; Verified profiles only</span>' +
+            '<span class="verified-filter-sub">Aadhaar/PAN verified candidates only</span>' +
+          '</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function candFilterChip(key, value, label, current) {
+    var active = current === value;
+    return '<button type="button" class="cand-chip' + (active ? ' active' : '') + '" data-action="set-cand-filter" data-key="' + key + '" data-value="' + esc(value) + '">' + label + '</button>';
   }
 
   // ---------------- Paywall modal (shown past the trial shortlist cap) ----------------
@@ -959,6 +1041,7 @@
           jobDetailCell("English", spec.english || "Not required") +
           jobDetailCell("Area", job.area || "&mdash;") +
           jobDetailCell("City", job.city || "&mdash;") +
+          jobDetailCell("ID verification", job.idVerificationRequired ? "&#128274; Required to apply" : "Not required") +
         '</div>')
       : "";
 

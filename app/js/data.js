@@ -265,10 +265,16 @@
         id: id,
         name: override ? override.name : name,
         age: 21 + Math.floor(rnd() * 20),
+        gender: rnd() < 0.78 ? "Male" : "Female",
         area: override ? override.city : area,
         distanceKm: distKm,
         experienceYears: exp,
         education: rnd() < 0.7 ? "< 10th Pass" : "10th Pass",
+        englishLevel: rnd() < 0.62 ? "Basic English" : "Fluent English",
+        // Aadhaar/PAN identity verification — independent of the AI voice
+        // screen above; this is what the "Verified profiles" filter and a
+        // job's mandatory-ID-to-apply setting both key off of.
+        verified: rnd() < 0.58,
         skills: skills,
         language: override ? override.lang + " (real sample recording)" : language,
         availability: availability,

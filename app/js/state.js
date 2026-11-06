@@ -58,7 +58,13 @@
       paymentStep: null,         // "method" | "processing" | "success"
       paymentMethod: null,       // "upi" | "card" | "netbanking"
       salesHelpRequested: false, // true once the Billing page's "talk to our team" prompt was used
-      subscribedAt: null        // ISO timestamp set the moment a plan is actually paid for
+      subscribedAt: null,        // ISO timestamp set the moment a plan is actually paid for
+      candidateFilters: {        // Candidates page filter bar — narrows which cards show, doesn't touch the review queue itself
+        verifiedOnly: false,     // Aadhaar/PAN verified candidates only
+        experience: "any",       // "any" | "0-1" | "1-3" | "3-5"
+        gender: "any",           // "any" | "Male" | "Female"
+        english: "any"           // "any" | "Basic English" | "Fluent English"
+      }
     };
   }
 
@@ -374,6 +380,21 @@
       state.mockJobRatings[jobId] = "bad";
       state.mockJobBadReasons[jobId] = (state.mockJobBadTags[jobId] || []).slice();
       state.mockJobBadPending[jobId] = false;
+      save(state);
+    },
+
+    setCandidateFilter: function (key, value) {
+      state.candidateFilters[key] = value;
+      save(state);
+    },
+
+    toggleVerifiedFilter: function () {
+      state.candidateFilters.verifiedOnly = !state.candidateFilters.verifiedOnly;
+      save(state);
+    },
+
+    clearCandidateFilters: function () {
+      state.candidateFilters = { verifiedOnly: false, experience: "any", gender: "any", english: "any" };
       save(state);
     },
 
