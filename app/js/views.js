@@ -142,7 +142,7 @@
       { icon: "&#128221;", label: "Post job" },
       { icon: "&#128222;", label: "AI screens candidates" },
       { icon: "&#9989;", label: "You see relevant matches" },
-      { icon: "&#129309;", label: "Hire, flat fee" }
+      { icon: "&#129309;", label: "Flat fee, then hire" }
     ];
     return '<div class="hiw-stepper"><div class="hiw-stepper-row">' +
       steps.map(function (s, i) {
