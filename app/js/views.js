@@ -444,7 +444,7 @@
       );
     }).filter(function (html) { return html; }).join("");
 
-    var filtersActive = filters.verifiedOnly || filters.distance !== "any" || filters.activeIn !== "any" ||
+    var filtersActive = filters.verifiedOnly || filters.activeCandidatesOnly || filters.distance !== "any" || filters.activeIn !== "any" ||
       filters.experience !== "any" || filters.gender !== "any" || filters.english !== "any";
     var emptyState = (!cards && filtersActive)
       ? '<div class="locked-banner">No candidates in this batch match your filters. <button class="btn ghost" style="margin-left:8px;padding:6px 12px;font-size:11.5px;" data-action="clear-cand-filters">Clear filters</button></div>'
@@ -472,6 +472,7 @@
   // it is in the sequence, it's just not rendered right now.
   function candidateMatchesFilters(c, f) {
     if (f.verifiedOnly && !c.verified) return false;
+    if (f.activeCandidatesOnly && c.lastActiveDaysAgo > 15) return false;
     if (f.distance !== "any" && c.distanceKm > Number(f.distance)) return false;
     if (f.activeIn !== "any" && c.lastActiveDaysAgo > Number(f.activeIn)) return false;
     if (f.experience !== "any") {
@@ -490,7 +491,7 @@
   function renderCandidateRail(st, shownCount, totalCount) {
     var f = st.candidateFilters;
     var open = st.candRailOpen;
-    var activeCount = (f.verifiedOnly ? 1 : 0) + (f.distance !== "any" ? 1 : 0) + (f.activeIn !== "any" ? 1 : 0) +
+    var activeCount = (f.verifiedOnly ? 1 : 0) + (f.activeCandidatesOnly ? 1 : 0) + (f.distance !== "any" ? 1 : 0) + (f.activeIn !== "any" ? 1 : 0) +
       (f.experience !== "any" ? 1 : 0) + (f.gender !== "any" ? 1 : 0) + (f.english !== "any" ? 1 : 0);
 
     return (
@@ -503,6 +504,11 @@
         '<button type="button" class="cand-rail-verified' + (f.verifiedOnly ? ' active' : '') + '" data-action="toggle-verified-filter">' +
           '<span class="verified-filter-check">' + (f.verifiedOnly ? '&#10003;' : '') + '</span>' +
           '<span class="cand-rail-verified-text"><span class="t">&#128274; Verified profiles only</span><span class="s">Aadhaar/PAN verified candidates</span></span>' +
+        '</button>' +
+
+        '<button type="button" class="cand-rail-verified' + (f.activeCandidatesOnly ? ' active' : '') + '" data-action="toggle-active-candidates-filter">' +
+          '<span class="verified-filter-check">' + (f.activeCandidatesOnly ? '&#10003;' : '') + '</span>' +
+          '<span class="cand-rail-verified-text"><span class="t">&#9889; Active candidates only</span><span class="s">Active on WorkIndia in the last 15 days</span></span>' +
         '</button>' +
 
         candRailGroup("distance", "Distance", open.distance, f.distance !== "any", [

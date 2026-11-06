@@ -83,6 +83,8 @@
       a.classList.toggle("active", a.getAttribute("data-route") === route);
     });
     document.getElementById("viewRoot").classList.toggle("view-wide", route === "billing" || route === "candidates");
+    var sidebarEl = document.getElementById("sidebar");
+    if (sidebarEl) sidebarEl.classList.toggle("collapsed", !!st.sidebarCollapsed);
     document.getElementById("viewRoot").innerHTML = V[route]();
     renderShellChrome();
     wireViewActions();
@@ -437,6 +439,10 @@
         S.toggleVerifiedFilter();
         render();
         break;
+      case "toggle-active-candidates-filter":
+        S.toggleActiveCandidatesFilter();
+        render();
+        break;
       case "toggle-cand-rail-group":
         S.toggleCandRailGroup(el.getAttribute("data-key"));
         render();
@@ -663,6 +669,14 @@
     if (!location.hash) location.hash = "#/dashboard";
     applyIncomingSearch();
     render();
+
+    // Sidebar collapse — bound once here (not via wireViewActions, which
+    // re-runs every render) since these buttons live in the static shell
+    // markup, not the re-rendered view outlet.
+    var sbCollapseBtn = document.getElementById("sbCollapseBtn");
+    var sbExpandBtn = document.getElementById("sbExpandBtn");
+    if (sbCollapseBtn) sbCollapseBtn.addEventListener("click", function () { S.toggleSidebar(); render(); });
+    if (sbExpandBtn) sbExpandBtn.addEventListener("click", function () { S.toggleSidebar(); render(); });
 
     // Hover shows the "how trial works" tooltip on desktop; this click
     // toggle covers touch devices, which have no hover state.

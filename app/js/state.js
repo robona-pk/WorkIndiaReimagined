@@ -11,6 +11,7 @@
   function defaultState() {
     return {
       onboarded: false,
+      sidebarCollapsed: false,   // left nav rail — collapsed to icons-only when true
       flowStep: "search",        // "search" | "count" (candidates+trial+login) | "posting" | "matching" | "hotleads"
       searchRole: null,
       searchCity: null,
@@ -61,8 +62,9 @@
       subscribedAt: null,        // ISO timestamp set the moment a plan is actually paid for
       candidateFilters: {        // Candidates page filter rail — narrows which cards show, doesn't touch the review queue itself
         verifiedOnly: false,     // Aadhaar/PAN verified candidates only
+        activeCandidatesOnly: false, // hides anyone inactive on WorkIndia for 15+ days, to cut down on candidates who won't respond
         distance: "any",         // "any" | "5" | "10" | "15" | "20" (km)
-        activeIn: "any",         // "any" | "1" | "3" | "7" | "15" | "30" | "60" (days)
+        activeIn: "any",         // "any" | "1" | "3" | "7" | "15" | "30" | "60" (days) — finer-grained recency, separate from the toggle above
         experience: "any",       // "any" | "0-1" | "1-3" | "3-5"
         gender: "any",           // "any" | "Male" | "Female"
         english: "any"           // "any" | "Basic English" | "Fluent English"
@@ -403,12 +405,22 @@
     },
 
     clearCandidateFilters: function () {
-      state.candidateFilters = { verifiedOnly: false, distance: "any", activeIn: "any", experience: "any", gender: "any", english: "any" };
+      state.candidateFilters = { verifiedOnly: false, activeCandidatesOnly: false, distance: "any", activeIn: "any", experience: "any", gender: "any", english: "any" };
+      save(state);
+    },
+
+    toggleActiveCandidatesFilter: function () {
+      state.candidateFilters.activeCandidatesOnly = !state.candidateFilters.activeCandidatesOnly;
       save(state);
     },
 
     toggleCandRailGroup: function (key) {
       state.candRailOpen[key] = !state.candRailOpen[key];
+      save(state);
+    },
+
+    toggleSidebar: function () {
+      state.sidebarCollapsed = !state.sidebarCollapsed;
       save(state);
     },
 
