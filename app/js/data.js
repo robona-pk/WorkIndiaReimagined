@@ -426,7 +426,7 @@
     BATCH_SIZE: 10,
     TOTAL_ALLOCATION: 30,
     SHORTLIST_TARGET: 5,
-    TRIAL_DAY_CAP: 7,
+    TRIAL_DAY_CAP: 3,
     HIRE_FEEDBACK_DELAY_DAYS: 90, // how long after a hire we wait before asking for feedback
     HIRE_BAD_REASONS: [
       "Skill mismatch",

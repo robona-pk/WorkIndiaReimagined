@@ -294,7 +294,7 @@
         ? "You've shortlisted " + D.SHORTLIST_TARGET + " strong candidates — your trial is complete."
         : st.trialEndReason === "allocation_exhausted"
           ? "You've reviewed all " + D.TOTAL_ALLOCATION + " profiles included in this trial."
-          : "Your 7-day trial window is up.";
+          : "Your 3-day trial window is up.";
       endBanner = '<div class="card" style="background:var(--primary);color:#fff;border:none;margin-bottom:18px;">' +
         '<strong style="font-size:14px;">Trial complete.</strong> <span style="font-size:13.5px;">' + reasonText + ' <a href="#/billing" style="color:#fff;text-decoration:underline;">See what it found &rarr;</a></span></div>';
     }
@@ -738,7 +738,7 @@
     }
 
     // Once the trial has ended (contact unlocks used up, sample exhausted,
-    // or the 7-day window closed), no new calls can be placed — only past
+    // or the 3-day window closed), no new calls can be placed — only past
     // call history stays reviewable. Mirrors the gate on the Candidates tab.
     var readyCard = st.trialEnded
       ? '<div class="card" style="margin-bottom:18px;"><p class="section-title">Trial complete</p><p class="section-sub">Calling is part of the paid plan now. <a href="#/billing">See what your trial found &rarr;</a></p></div>'

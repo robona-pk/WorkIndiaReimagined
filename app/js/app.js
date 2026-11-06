@@ -26,7 +26,7 @@
     return V[h] ? h : "dashboard";
   }
 
-  // The chip used to show "Day X/7 of trial", but day-count and the
+  // The chip used to show "Day X/3 of trial", but day-count and the
   // real trial-ending condition (SHORTLIST_TARGET contact unlocks) are
   // two separate mechanics — a recruiter who has already unlocked all
   // their contacts but is still on "Day 1/7" reads as broken or confusing.

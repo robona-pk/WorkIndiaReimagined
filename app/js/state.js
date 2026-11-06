@@ -411,7 +411,7 @@
   //   - SHORTLIST_TARGET contacts unlocked (the primary, intended path —
   //     the recruiter got real value and converting is the next step)
   //   - the shown sample of profiles is fully reviewed (allocation_exhausted)
-  //   - the 7-day window closes (day_cap)
+  //   - the 3-day window closes (day_cap)
   // Only a limited sample of the real local supply is ever shown in a
   // trial (see estimateCandidateCount) — this isn't the full database, so
   // exhausting it isn't itself a sign of abuse, just the trial doing its job.
