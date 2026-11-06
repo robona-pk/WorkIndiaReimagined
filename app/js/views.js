@@ -131,23 +131,32 @@
     );
   }
 
-  // A one-line "what happens next" strip — icons + arrows, no paragraphs.
-  // Folded directly into the posting step (not its own screen) so a
-  // recruiter understands why "AI already called 3 candidates" shows up
-  // later, without adding to the onboarding step count.
+  // A numbered stepper — the current step filled and glowing, the rest
+  // outlined — showing the whole loop (post -> AI screens -> you review ->
+  // hire) in one glance. Folded directly into the posting step (not its
+  // own screen) so a recruiter understands why "AI already called 3
+  // candidates" shows up later, without adding to the onboarding step
+  // count. Chosen over four other treatments prototyped separately.
   function renderHowItWorksStrip() {
     var steps = [
       { icon: "&#128221;", label: "Post job" },
-      { icon: "&#128222;", label: "AI calls candidates" },
+      { icon: "&#128222;", label: "AI screens candidates" },
       { icon: "&#9989;", label: "You see matches" },
       { icon: "&#129309;", label: "Hire, flat fee" }
     ];
-    return '<div class="hiw-strip">' +
+    return '<div class="hiw-stepper"><div class="hiw-stepper-row">' +
       steps.map(function (s, i) {
-        return '<span class="hiw-step"><span class="hiw-icon">' + s.icon + '</span>' + s.label + '</span>' +
-          (i < steps.length - 1 ? '<span class="hiw-arrow">&rarr;</span>' : '');
+        var current = i === 0;
+        return (
+          '<div class="hiw-node' + (current ? ' current' : '') + '">' +
+            (i < steps.length - 1 ? '<div class="hiw-line"></div>' : '') +
+            '<div class="hiw-circle">' + s.icon + '</div>' +
+            '<div class="hiw-label">' + s.label + '</div>' +
+            (current ? '<span class="hiw-tag">You&rsquo;re here</span>' : '') +
+          '</div>'
+        );
       }).join('') +
-    '</div>';
+    '</div></div>';
   }
 
   // ---------------- Step 3: job + company, one step, with a progress bar ----------------
