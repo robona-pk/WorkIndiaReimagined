@@ -85,6 +85,13 @@
     document.getElementById("viewRoot").classList.toggle("view-wide", route === "billing" || route === "candidates");
     var sidebarEl = document.getElementById("sidebar");
     if (sidebarEl) sidebarEl.classList.toggle("collapsed", !!st.sidebarCollapsed);
+    var toggleBtn = document.getElementById("sbToggleBtn");
+    if (toggleBtn) {
+      var label = st.sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+      toggleBtn.innerHTML = st.sidebarCollapsed ? "&#8250;" : "&#8249;";
+      toggleBtn.setAttribute("aria-label", label);
+      toggleBtn.setAttribute("title", label);
+    }
     document.getElementById("viewRoot").innerHTML = V[route]();
     renderShellChrome();
     wireViewActions();
@@ -677,13 +684,14 @@
     applyIncomingSearch();
     render();
 
-    // Sidebar collapse — bound once here (not via wireViewActions, which
-    // re-runs every render) since these buttons live in the static shell
-    // markup, not the re-rendered view outlet.
-    var sbCollapseBtn = document.getElementById("sbCollapseBtn");
-    var sbExpandBtn = document.getElementById("sbExpandBtn");
-    if (sbCollapseBtn) sbCollapseBtn.addEventListener("click", function () { S.toggleSidebar(); render(); });
-    if (sbExpandBtn) sbExpandBtn.addEventListener("click", function () { S.toggleSidebar(); render(); });
+    // Sidebar collapse — a single button that always lives in the same spot
+    // (the brand row) and just flips its icon/label, instead of two
+    // separate buttons in two different rows that forced hunting for
+    // whichever one was currently visible. Bound once here (not via
+    // wireViewActions, which re-runs every render) since it lives in the
+    // static shell markup, not the re-rendered view outlet.
+    var sbToggleBtn = document.getElementById("sbToggleBtn");
+    if (sbToggleBtn) sbToggleBtn.addEventListener("click", function () { S.toggleSidebar(); render(); });
 
     // Hover shows the "how trial works" tooltip on desktop; this click
     // toggle covers touch devices, which have no hover state.
