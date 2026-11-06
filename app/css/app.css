@@ -56,6 +56,13 @@ a { color: var(--primary); }
   white-space: nowrap; overflow: hidden;
 }
 .sb-link svg { width: 17px; height: 17px; flex: 0 0 auto; }
+/* Fixed icon box so every nav icon lines up at the same size and baseline —
+   without it, glyphs outside the pictographic emoji range (the settings
+   gear) render noticeably smaller/thinner than the full-color ones. */
+.sb-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; font-size: 16px; line-height: 1; flex: 0 0 auto;
+}
 .sb-link:hover { background: var(--bg); color: var(--ink); }
 .sb-link.active { background: var(--primary-light); color: var(--primary-dark); }
 .sb-foot { font-size: 11px; color: var(--muted); padding: 10px 8px 2px; border-top: 1px solid var(--border); margin-top: 10px; white-space: nowrap; overflow: hidden; }
@@ -201,6 +208,7 @@ a { color: var(--primary); }
 .cand-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
 .cand-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
 .badge-id-verified { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: #15803D; background: var(--success-light, #DCFCE7); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.cand-last-active { font-size: 10px; color: var(--muted); font-weight: 500; white-space: nowrap; margin-top: 1px; }
 
 /* ---- candidates page: left filter rail + right content, matching
    production's Database-tab layout instead of a horizontal chip bar ---- */

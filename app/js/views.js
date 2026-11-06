@@ -27,6 +27,15 @@
     return "Posted " + d + " days ago";
   }
 
+  // Low-key recency label for a candidate card — "not too much emphasis",
+  // so it reads as a quiet metadata line, not a callout.
+  function activeRecencyLabel(days) {
+    if (days === undefined || days === null) return "";
+    if (days <= 0) return "Active today";
+    if (days === 1) return "Active 1 day ago";
+    return "Active " + days + " days ago";
+  }
+
   function hireRatingLabel(r) {
     return r === "great" ? "Great fit" : r === "ok" ? "Okay so far" : "Not working out";
   }
@@ -426,6 +435,7 @@
             '<div class="cand-badges">' +
               '<span class="badge-ai">&#10024; AI-verified</span>' +
               (c.verified ? '<span class="badge-id-verified" title="Aadhaar/PAN verified">&#128274; ID Verified</span>' : '') +
+              '<span class="cand-last-active">' + activeRecencyLabel(c.lastActiveDaysAgo) + '</span>' +
             '</div>' +
           '</div>' +
           '<div class="skills-row">' + c.skills.map(function (s) { return '<span class="skill-tag">' + s + '</span>'; }).join("") + '</div>' +
