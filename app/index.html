@@ -9,17 +9,21 @@
 <body>
 
   <div class="app-shell" id="appShell" style="display:none;">
-    <aside class="sidebar">
-      <div class="sb-brand"><div class="sb-mark">W</div><span>WorkIndia</span></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-brand">
+        <div class="sb-mark">W</div><span class="sb-brand-text">WorkIndia</span>
+        <button type="button" class="sb-collapse-btn" id="sbCollapseBtn" aria-label="Collapse sidebar" title="Collapse sidebar">&#8249;</button>
+      </div>
       <nav class="sb-nav">
-        <a href="#/dashboard" class="sb-link" data-route="dashboard">&#128202; Dashboard</a>
-        <a href="#/jobs" class="sb-link" data-route="jobs">&#128188; My Jobs</a>
-        <a href="#/candidates" class="sb-link" data-route="candidates">&#128100; Candidates</a>
-        <a href="#/calls" class="sb-link" data-route="calls">&#128222; Calls</a>
-        <a href="#/billing" class="sb-link" data-route="billing">&#128176; Trial &amp; Billing</a>
-        <a href="#/updates" class="sb-link" data-route="updates">&#128172; Updates</a>
-        <a href="#/settings" class="sb-link" data-route="settings">&#9881; Settings</a>
+        <a href="#/dashboard" class="sb-link" data-route="dashboard" title="Dashboard">&#128202; <span class="sb-label">Dashboard</span></a>
+        <a href="#/jobs" class="sb-link" data-route="jobs" title="My Jobs">&#128188; <span class="sb-label">My Jobs</span></a>
+        <a href="#/candidates" class="sb-link" data-route="candidates" title="Candidates">&#128100; <span class="sb-label">Candidates</span></a>
+        <a href="#/calls" class="sb-link" data-route="calls" title="Calls">&#128222; <span class="sb-label">Calls</span></a>
+        <a href="#/billing" class="sb-link" data-route="billing" title="Trial &amp; Billing">&#128176; <span class="sb-label">Trial &amp; Billing</span></a>
+        <a href="#/updates" class="sb-link" data-route="updates" title="Updates">&#128172; <span class="sb-label">Updates</span></a>
+        <a href="#/settings" class="sb-link" data-route="settings" title="Settings">&#9881; <span class="sb-label">Settings</span></a>
       </nav>
+      <button type="button" class="sb-expand-btn" id="sbExpandBtn" aria-label="Expand sidebar" title="Expand sidebar">&#8250;</button>
       <div class="sb-foot">Front-end prototype &middot; not a real product</div>
     </aside>
 

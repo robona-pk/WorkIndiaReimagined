@@ -56,6 +56,63 @@
   var chunks = [];
   var lastError = null;
 
+  // ---- live speech-to-text, so the post-call "summary" reflects what was
+  // actually said instead of a canned line. Uses the browser's own
+  // SpeechRecognition (Chrome/Edge); where it isn't available, transcription
+  // simply doesn't happen — callers must treat an empty transcript as "no
+  // transcript," never fill in a fabricated one. ----
+  var SpeechRecognitionCtor = global.SpeechRecognition || global.webkitSpeechRecognition || null;
+  var recognizer = null;
+  var recognitionWanted = false; // true while a call is "supposed" to be transcribing — lets onend auto-restart after a browser-forced stop
+  var transcriptParts = [];
+
+  function transcriptionSupported() { return !!SpeechRecognitionCtor; }
+
+  function startTranscription() {
+    transcriptParts = [];
+    if (!SpeechRecognitionCtor) return false;
+    recognitionWanted = true;
+    try {
+      recognizer = new SpeechRecognitionCtor();
+      recognizer.continuous = true;
+      recognizer.interimResults = false;
+      recognizer.lang = (global.navigator && global.navigator.language) || "en-IN";
+      recognizer.onresult = function (e) {
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) {
+            var piece = (e.results[i][0].transcript || "").trim();
+            if (piece) transcriptParts.push(piece);
+          }
+        }
+      };
+      // Some browsers auto-stop a continuous session after a few seconds of
+      // silence. If we're still mid-call, just restart it — otherwise a
+      // quiet moment on the call would silently truncate the transcript.
+      recognizer.onend = function () {
+        if (recognitionWanted) {
+          try { recognizer.start(); } catch (e) { /* already running / unsupported mid-call restart */ }
+        }
+      };
+      recognizer.onerror = function () { /* e.g. "no-speech" — not fatal, onend will decide whether to restart */ };
+      recognizer.start();
+      return true;
+    } catch (e) {
+      recognizer = null;
+      return false;
+    }
+  }
+
+  // Stops recognition and returns whatever was actually transcribed (may be
+  // an empty string if nothing was understood, or recognition never started).
+  function stopTranscription() {
+    recognitionWanted = false;
+    if (recognizer) {
+      try { recognizer.stop(); } catch (e) { /* ignore */ }
+    }
+    recognizer = null;
+    return transcriptParts.join(" ").trim();
+  }
+
   function pickMimeType() {
     if (!global.MediaRecorder || !global.MediaRecorder.isTypeSupported) return "";
     var candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -120,6 +177,7 @@
       try { activeRecorder.stop(); } catch (e) { /* ignore */ }
     }
     cleanupStream();
+    stopTranscription(); // abandoned call — discard whatever was transcribed so far too
   }
 
   function cleanupStream() {
@@ -138,6 +196,9 @@
     stopCapture: stopCapture,
     discardCapture: discardCapture,
     getRecording: getRecording,
-    getLastError: getLastError
+    getLastError: getLastError,
+    startTranscription: startTranscription,
+    stopTranscription: stopTranscription,
+    transcriptionSupported: transcriptionSupported
   };
 })(window);

@@ -760,8 +760,23 @@
         : (decision === "notFit" ? '<span class="pill muted">Not a fit</span>' : '<span class="pill warn">Awaiting decision</span>');
       var durSec = st.callDurations[id];
       if (durSec === undefined) durSec = 60 + (id.charCodeAt(id.length - 1) * 7) % 180; // fallback for pre-existing demo state
-      var summary = D.buildRecruiterCallSummary(c, decision);
       var hasRecording = !!(st.liveCallRecordings && st.liveCallRecordings[id]);
+      // Prefer the real transcript captured live from the recruiter's mic
+      // during this call (see js/recorder.js) over any derived text — this
+      // is literally what was said, not a guess at what probably was.
+      // Browsers without SpeechRecognition (or a call made before this
+      // existed) fall back to the old decision-based line, labeled as such.
+      var transcript = (st.liveCallTranscripts && st.liveCallTranscripts[id]) || "";
+      var summaryLabel, summary;
+      if (transcript) {
+        summaryLabel = "Transcript of this call (captured live)";
+        summary = transcript;
+      } else {
+        summaryLabel = window.WI_RECORDER && window.WI_RECORDER.transcriptionSupported()
+          ? "No speech was picked up on this call &mdash; not a transcript:"
+          : "This browser can&rsquo;t transcribe calls live &mdash; not a transcript:";
+        summary = D.buildRecruiterCallSummary(c, decision);
+      }
 
       var callRow = hasRecording
         ? ('<button type="button" class="cl-mini-play" id="rcallBtn-' + id + '" data-action="toggle-rcall" data-id="' + id + '" aria-label="Play your recorded call">&#9658;</button>' +
@@ -781,7 +796,10 @@
           '<div class="cl-call-row">' + callRow +
             '<button type="button" class="btn ghost cl-summary-btn" data-action="toggle-summary" data-id="' + id + '">Summary</button>' +
           '</div>' +
-          '<div class="cl-summary-box" id="rcallSummary-' + id + '" style="display:none;">' + esc(summary) + '</div>' +
+          '<div class="cl-summary-box" id="rcallSummary-' + id + '" style="display:none;">' +
+            '<div class="cl-summary-label">' + summaryLabel + '</div>' +
+            esc(summary) +
+          '</div>' +
         '</div>'
       );
     }

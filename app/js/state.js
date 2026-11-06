@@ -50,6 +50,7 @@
       callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
       profileOpenFor: null,      // candidateId whose profile overlay is open, or null
       liveCallRecordings: {},    // candidateId -> true once the recruiter's own mic audio was captured for that call
+      liveCallTranscripts: {},   // candidateId -> real text transcribed live from the recruiter's mic during that call (empty/absent if speech recognition wasn't available or caught nothing)
       micPermissionDenied: false, // true once the browser mic prompt has been denied/unsupported, so we stop re-asking
       billingTab: "single",      // "single" | "multi" — which pricing tab is showing on Trial & Billing
       subscribedTierId: null,    // e.g. "1m" | "3m" | "12m" — which plan tier they subscribed to
@@ -208,6 +209,15 @@
     // — the UI should say so plainly rather than play a stand-in clip.
     markLiveRecording: function (candidateId, captured) {
       state.liveCallRecordings[candidateId] = !!captured;
+      save(state);
+    },
+
+    // Stores the real transcript captured live during this call (see
+    // js/recorder.js). An empty string is stored as-is — "nothing was
+    // transcribed" is meaningfully different from "no attempt was made" to
+    // the UI, which only shows a transcript-based summary when this is non-empty.
+    setCallTranscript: function (candidateId, text) {
+      state.liveCallTranscripts[candidateId] = text || "";
       save(state);
     },
 

@@ -483,6 +483,7 @@
       if (s.callOverlayFor !== id) return; // overlay was cancelled/closed while the permission prompt was up
       if (started) {
         S.setMicPermissionDenied(false);
+        window.WI_RECORDER.startTranscription(); // best-effort — unsupported browsers just won't produce a transcript
         beginConnectingFlow(id);
       } else {
         S.setMicPermissionDenied(true);
@@ -523,6 +524,12 @@
     var st = S.get();
     var id = st.callOverlayFor;
     if (id) S.recordCallDuration(id, st.callSeconds || 0);
+    // Grab the transcript synchronously at hang-up, before anything else
+    // touches the recognizer — stopCapture() below is async and we don't
+    // want a race where a second call starts before this one's transcript
+    // is read out.
+    var transcript = window.WI_RECORDER ? window.WI_RECORDER.stopTranscription() : "";
+    if (id) S.setCallTranscript(id, transcript);
     st.callPhase = "shortlist";
     render();
     if (id && window.WI_RECORDER) {
