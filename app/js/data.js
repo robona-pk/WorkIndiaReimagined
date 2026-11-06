@@ -275,6 +275,9 @@
         // screen above; this is what the "Verified profiles" filter and a
         // job's mandatory-ID-to-apply setting both key off of.
         verified: rnd() < 0.58,
+        // How recently this profile was active on WorkIndia — powers the
+        // "Candidate Active In" filter, matching production's own.
+        lastActiveDaysAgo: rnd() < 0.5 ? Math.floor(rnd() * 3) : Math.floor(rnd() * 55) + 3,
         skills: skills,
         language: override ? override.lang + " (real sample recording)" : language,
         availability: availability,

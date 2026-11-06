@@ -444,20 +444,23 @@
       );
     }).filter(function (html) { return html; }).join("");
 
-    var filtersActive = filters.verifiedOnly || filters.experience !== "any" || filters.gender !== "any" || filters.english !== "any";
+    var filtersActive = filters.verifiedOnly || filters.distance !== "any" || filters.activeIn !== "any" ||
+      filters.experience !== "any" || filters.gender !== "any" || filters.english !== "any";
     var emptyState = (!cards && filtersActive)
       ? '<div class="locked-banner">No candidates in this batch match your filters. <button class="btn ghost" style="margin-left:8px;padding:6px 12px;font-size:11.5px;" data-action="clear-cand-filters">Clear filters</button></div>'
       : "";
 
     return (
-      '<div>' +
-        '<div class="batch-head">' +
-          '<div><p class="section-title" style="margin-bottom:2px;">' + batchLabel + '</p><p class="section-sub" style="margin-bottom:0;">AI pre-screened by voice before you see them &mdash; mark Relevant to unlock contact.</p></div>' +
-          '<span class="pill muted">' + st.cursorInBatch + '/10 reviewed this batch</span>' +
+      '<div class="candidates-layout">' +
+        renderCandidateRail(st, shownCount, batch.length) +
+        '<div class="cand-main">' +
+          '<div class="batch-head">' +
+            '<div><p class="section-title" style="margin-bottom:2px;">' + batchLabel + '</p><p class="section-sub" style="margin-bottom:0;">AI pre-screened by voice before you see them &mdash; mark Relevant to unlock contact.</p></div>' +
+            '<span class="pill muted">' + st.cursorInBatch + '/10 reviewed this batch</span>' +
+          '</div>' +
+          '<div class="trial-shortlist-note">You can shortlist up to <b>' + D.SHORTLIST_TARGET + ' candidates</b> on this trial &middot; ' + st.shortlistedIds.length + '/' + D.SHORTLIST_TARGET + ' used</div>' +
+          (emptyState || '<div class="cand-grid">' + cards + '</div>') +
         '</div>' +
-        '<div class="trial-shortlist-note">You can shortlist up to <b>' + D.SHORTLIST_TARGET + ' candidates</b> on this trial &middot; ' + st.shortlistedIds.length + '/' + D.SHORTLIST_TARGET + ' used</div>' +
-        renderCandidateFilterBar(st, shownCount, batch.length) +
-        (emptyState || '<div class="cand-grid">' + cards + '</div>') +
         (st.showPaywall ? renderPaywall() : "") +
         (st.paymentStep ? renderPaymentModal() : "") +
       '</div>'
@@ -469,6 +472,8 @@
   // it is in the sequence, it's just not rendered right now.
   function candidateMatchesFilters(c, f) {
     if (f.verifiedOnly && !c.verified) return false;
+    if (f.distance !== "any" && c.distanceKm > Number(f.distance)) return false;
+    if (f.activeIn !== "any" && c.lastActiveDaysAgo > Number(f.activeIn)) return false;
     if (f.experience !== "any") {
       if (f.experience === "0-1" && c.experienceYears > 1) return false;
       if (f.experience === "1-3" && (c.experienceYears < 1 || c.experienceYears > 3)) return false;
@@ -479,49 +484,87 @@
     return true;
   }
 
-  function renderCandidateFilterBar(st, shownCount, totalCount) {
+  // Left filter rail — mirrors the real WorkIndia Database tab's layout:
+  // a sticky sidebar of collapsible radio-group filters plus a prominent
+  // toggle at the top, instead of a horizontal chip bar fighting for room.
+  function renderCandidateRail(st, shownCount, totalCount) {
     var f = st.candidateFilters;
-    var activeCount = (f.verifiedOnly ? 1 : 0) + (f.experience !== "any" ? 1 : 0) + (f.gender !== "any" ? 1 : 0) + (f.english !== "any" ? 1 : 0);
+    var open = st.candRailOpen;
+    var activeCount = (f.verifiedOnly ? 1 : 0) + (f.distance !== "any" ? 1 : 0) + (f.activeIn !== "any" ? 1 : 0) +
+      (f.experience !== "any" ? 1 : 0) + (f.gender !== "any" ? 1 : 0) + (f.english !== "any" ? 1 : 0);
+
     return (
-      '<div class="cand-filter-bar">' +
-        '<div class="cand-filter-top">' +
-          '<span class="cand-filter-title">Filter candidates</span>' +
-          '<span class="cand-filter-count">' + shownCount + ' of ' + totalCount + ' shown</span>' +
-          (activeCount ? '<button type="button" class="cand-filter-clear" data-action="clear-cand-filters">Clear filters</button>' : '') +
+      '<aside class="cand-rail">' +
+        '<div class="cand-rail-head">' +
+          '<div><span class="cand-rail-title">All Filters</span><span class="cand-rail-count">' + shownCount + ' of ' + totalCount + ' shown</span></div>' +
+          (activeCount ? '<button type="button" class="cand-filter-clear" data-action="clear-cand-filters">Clear all</button>' : '') +
         '</div>' +
-        '<div class="cand-filter-row">' +
-          '<span class="cand-filter-label">Experience</span>' +
-          candFilterChip("experience", "any", "Any", f.experience) +
-          candFilterChip("experience", "0-1", "0&ndash;1 yrs", f.experience) +
-          candFilterChip("experience", "1-3", "1&ndash;3 yrs", f.experience) +
-          candFilterChip("experience", "3-5", "3+ yrs", f.experience) +
-        '</div>' +
-        '<div class="cand-filter-row">' +
-          '<span class="cand-filter-label">Gender</span>' +
-          candFilterChip("gender", "any", "Any", f.gender) +
-          candFilterChip("gender", "Male", "Male", f.gender) +
-          candFilterChip("gender", "Female", "Female", f.gender) +
-        '</div>' +
-        '<div class="cand-filter-row">' +
-          '<span class="cand-filter-label">English</span>' +
-          candFilterChip("english", "any", "Any", f.english) +
-          candFilterChip("english", "Basic English", "Basic", f.english) +
-          candFilterChip("english", "Fluent English", "Fluent", f.english) +
-        '</div>' +
-        '<div class="cand-filter-row">' +
-          '<button type="button" class="verified-filter-toggle' + (f.verifiedOnly ? ' active' : '') + '" data-action="toggle-verified-filter">' +
-            '<span class="verified-filter-check">' + (f.verifiedOnly ? '&#10003;' : '') + '</span>' +
-            '<span>&#128274; Verified profiles only</span>' +
-            '<span class="verified-filter-sub">Aadhaar/PAN verified candidates only</span>' +
-          '</button>' +
-        '</div>' +
+
+        '<button type="button" class="cand-rail-verified' + (f.verifiedOnly ? ' active' : '') + '" data-action="toggle-verified-filter">' +
+          '<span class="verified-filter-check">' + (f.verifiedOnly ? '&#10003;' : '') + '</span>' +
+          '<span class="cand-rail-verified-text"><span class="t">&#128274; Verified profiles only</span><span class="s">Aadhaar/PAN verified candidates</span></span>' +
+        '</button>' +
+
+        candRailGroup("distance", "Distance", open.distance, f.distance !== "any", [
+          candRailOption("distance", "any", "Anywhere in the city", f.distance),
+          candRailOption("distance", "5", "Within 5 km", f.distance),
+          candRailOption("distance", "10", "Within 10 km", f.distance),
+          candRailOption("distance", "15", "Within 15 km", f.distance),
+          candRailOption("distance", "20", "Within 20 km", f.distance)
+        ]) +
+
+        candRailGroup("activeIn", "Candidate Active In", open.activeIn, f.activeIn !== "any", [
+          candRailOption("activeIn", "any", "Show all", f.activeIn),
+          candRailOption("activeIn", "1", "1 Day", f.activeIn),
+          candRailOption("activeIn", "3", "3 Days", f.activeIn),
+          candRailOption("activeIn", "7", "7 Days", f.activeIn),
+          candRailOption("activeIn", "15", "15 Days", f.activeIn),
+          candRailOption("activeIn", "30", "1 Month", f.activeIn)
+        ]) +
+
+        candRailGroup("experience", "Experience", open.experience, f.experience !== "any", [
+          candRailOption("experience", "any", "Any", f.experience),
+          candRailOption("experience", "0-1", "0&ndash;1 yrs", f.experience),
+          candRailOption("experience", "1-3", "1&ndash;3 yrs", f.experience),
+          candRailOption("experience", "3-5", "3+ yrs", f.experience)
+        ]) +
+
+        candRailGroup("gender", "Gender", open.gender, f.gender !== "any", [
+          candRailOption("gender", "any", "Any", f.gender),
+          candRailOption("gender", "Male", "Male", f.gender),
+          candRailOption("gender", "Female", "Female", f.gender)
+        ]) +
+
+        candRailGroup("english", "English", open.english, f.english !== "any", [
+          candRailOption("english", "any", "Any", f.english),
+          candRailOption("english", "Basic English", "Basic English", f.english),
+          candRailOption("english", "Fluent English", "Fluent English", f.english)
+        ]) +
+      '</aside>'
+    );
+  }
+
+  function candRailGroup(key, label, isOpen, hasActive, optionsHtml) {
+    return (
+      '<div class="cand-rail-group' + (isOpen ? ' open' : '') + '">' +
+        '<button type="button" class="cand-rail-group-head" data-action="toggle-cand-rail-group" data-key="' + key + '">' +
+          '<span>' + label + (hasActive ? '<span class="cand-rail-badge">1</span>' : '') + '</span>' +
+          '<span class="cand-rail-chev">&#9662;</span>' +
+        '</button>' +
+        '<div class="cand-rail-body">' + optionsHtml.join('') + '</div>' +
       '</div>'
     );
   }
 
-  function candFilterChip(key, value, label, current) {
-    var active = current === value;
-    return '<button type="button" class="cand-chip' + (active ? ' active' : '') + '" data-action="set-cand-filter" data-key="' + key + '" data-value="' + esc(value) + '">' + label + '</button>';
+  function candRailOption(key, value, label, current) {
+    var checked = current === value;
+    return (
+      '<label class="cand-rail-option">' +
+        '<input type="radio" name="cand-rail-' + key + '"' + (checked ? ' checked' : '') +
+          ' data-action="set-cand-filter" data-key="' + key + '" data-value="' + esc(value) + '">' +
+        '<span>' + label + '</span>' +
+      '</label>'
+    );
   }
 
   // ---------------- Paywall modal (shown past the trial shortlist cap) ----------------

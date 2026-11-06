@@ -59,12 +59,15 @@
       paymentMethod: null,       // "upi" | "card" | "netbanking"
       salesHelpRequested: false, // true once the Billing page's "talk to our team" prompt was used
       subscribedAt: null,        // ISO timestamp set the moment a plan is actually paid for
-      candidateFilters: {        // Candidates page filter bar — narrows which cards show, doesn't touch the review queue itself
+      candidateFilters: {        // Candidates page filter rail — narrows which cards show, doesn't touch the review queue itself
         verifiedOnly: false,     // Aadhaar/PAN verified candidates only
+        distance: "any",         // "any" | "5" | "10" | "15" | "20" (km)
+        activeIn: "any",         // "any" | "1" | "3" | "7" | "15" | "30" | "60" (days)
         experience: "any",       // "any" | "0-1" | "1-3" | "3-5"
         gender: "any",           // "any" | "Male" | "Female"
         english: "any"           // "any" | "Basic English" | "Fluent English"
-      }
+      },
+      candRailOpen: { distance: true, activeIn: true, experience: false, gender: false, english: false }
     };
   }
 
@@ -73,7 +76,13 @@
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return defaultState();
       var parsed = JSON.parse(raw);
-      return Object.assign(defaultState(), parsed);
+      var merged = Object.assign(defaultState(), parsed);
+      // candidateFilters/candRailOpen gain new keys over time; a shallow
+      // Object.assign would let an older saved object hide the new ones,
+      // so merge these two nested objects explicitly.
+      merged.candidateFilters = Object.assign(defaultState().candidateFilters, parsed.candidateFilters || {});
+      merged.candRailOpen = Object.assign(defaultState().candRailOpen, parsed.candRailOpen || {});
+      return merged;
     } catch (e) {
       return defaultState();
     }
@@ -394,7 +403,12 @@
     },
 
     clearCandidateFilters: function () {
-      state.candidateFilters = { verifiedOnly: false, experience: "any", gender: "any", english: "any" };
+      state.candidateFilters = { verifiedOnly: false, distance: "any", activeIn: "any", experience: "any", gender: "any", english: "any" };
+      save(state);
+    },
+
+    toggleCandRailGroup: function (key) {
+      state.candRailOpen[key] = !state.candRailOpen[key];
       save(state);
     },
 

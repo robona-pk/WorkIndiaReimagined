@@ -181,28 +181,51 @@ a { color: var(--primary); }
 .cand-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
 .badge-id-verified { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: #15803D; background: var(--success-light, #DCFCE7); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 
-/* ---- candidate filter bar ---- */
-.cand-filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
-.cand-filter-top { display: flex; align-items: center; gap: 10px; }
-.cand-filter-title { font-size: 13px; font-weight: 800; color: var(--ink); }
-.cand-filter-count { font-size: 11.5px; color: var(--muted); margin-left: auto; }
-.cand-filter-clear { font-size: 11.5px; font-weight: 700; color: var(--primary); background: none; border: none; cursor: pointer; padding: 0; }
-.cand-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.cand-filter-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; min-width: 72px; }
-.cand-chip { border: 1.5px solid var(--border); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
-.cand-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-.verified-filter-toggle {
-  display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--border); border-radius: 10px;
-  background: var(--bg); padding: 9px 12px; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; width: 100%; text-align: left;
+/* ---- candidates page: left filter rail + right content, matching
+   production's Database-tab layout instead of a horizontal chip bar ---- */
+.candidates-layout { display: flex; align-items: flex-start; gap: 22px; }
+.cand-main { flex: 1; min-width: 0; }
+.cand-rail {
+  width: 252px; flex: 0 0 auto; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px; position: sticky; top: 16px;
 }
-.verified-filter-toggle.active { border-color: #15803D; background: var(--success-light, #DCFCE7); color: #15803D; }
+.cand-rail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px; }
+.cand-rail-title { font-size: 13px; font-weight: 800; color: var(--ink); }
+.cand-rail-count { font-size: 11px; color: var(--muted); display: block; margin-top: 1px; }
+.cand-filter-clear { font-size: 11.5px; font-weight: 700; color: var(--primary); background: none; border: none; cursor: pointer; padding: 0; }
+.cand-rail-verified {
+  display: flex; align-items: center; gap: 9px; border: 1.5px solid var(--border); border-radius: 10px;
+  background: var(--bg); padding: 10px 11px; margin-bottom: 10px; cursor: pointer; width: 100%; text-align: left;
+}
+.cand-rail-verified.active { border-color: #15803D; background: var(--success-light, #DCFCE7); }
 .verified-filter-check {
   width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--border); background: var(--surface);
   display: flex; align-items: center; justify-content: center; font-size: 11px; flex: 0 0 auto; color: #15803D;
 }
-.verified-filter-toggle.active .verified-filter-check { border-color: #15803D; background: #fff; }
-.verified-filter-sub { font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 2px; }
-.verified-filter-toggle.active .verified-filter-sub { color: #15803D; opacity: .8; }
+.cand-rail-verified.active .verified-filter-check { border-color: #15803D; background: #fff; }
+.cand-rail-verified-text { display: flex; flex-direction: column; }
+.cand-rail-verified-text .t { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.cand-rail-verified.active .cand-rail-verified-text .t { color: #15803D; }
+.cand-rail-verified-text .s { font-size: 10.5px; color: var(--muted); }
+
+.cand-rail-group { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+.cand-rail-group-head {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; background: var(--bg); border: none;
+  padding: 10px 12px; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: left;
+}
+.cand-rail-badge { font-size: 10px; font-weight: 800; color: var(--primary); background: var(--primary-light); padding: 1px 7px; border-radius: 999px; margin-left: 7px; }
+.cand-rail-chev { color: var(--muted); font-size: 10px; transition: transform .15s ease; }
+.cand-rail-group.open .cand-rail-chev { transform: rotate(180deg); }
+.cand-rail-body { padding: 4px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+.cand-rail-option { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink); cursor: pointer; }
+.cand-rail-option input { accent-color: var(--primary); width: 15px; height: 15px; flex: 0 0 auto; }
+
+.cand-filter-count-row { font-size: 11.5px; color: var(--muted); margin-bottom: 12px; }
+
+@media (max-width: 860px) {
+  .candidates-layout { flex-direction: column; }
+  .cand-rail { width: 100%; position: static; }
+}
 
 /* ---- job posting: mandatory ID verification toggle ---- */
 .id-verify-toggle {

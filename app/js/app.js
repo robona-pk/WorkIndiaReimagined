@@ -82,7 +82,7 @@
     document.querySelectorAll(".sb-link").forEach(function (a) {
       a.classList.toggle("active", a.getAttribute("data-route") === route);
     });
-    document.getElementById("viewRoot").classList.toggle("view-wide", route === "billing");
+    document.getElementById("viewRoot").classList.toggle("view-wide", route === "billing" || route === "candidates");
     document.getElementById("viewRoot").innerHTML = V[route]();
     renderShellChrome();
     wireViewActions();
@@ -435,6 +435,10 @@
         break;
       case "toggle-verified-filter":
         S.toggleVerifiedFilter();
+        render();
+        break;
+      case "toggle-cand-rail-group":
+        S.toggleCandRailGroup(el.getAttribute("data-key"));
         render();
         break;
       case "clear-cand-filters":
