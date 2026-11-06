@@ -88,7 +88,8 @@
     var toggleBtn = document.getElementById("sbToggleBtn");
     if (toggleBtn) {
       var label = st.sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
-      toggleBtn.innerHTML = st.sidebarCollapsed ? "&#8250;" : "&#8249;";
+      toggleBtn.innerHTML = (st.sidebarCollapsed ? "&#8250;" : "&#8249;") +
+        ' <span class="sb-toggle-label">' + (st.sidebarCollapsed ? "Expand" : "Collapse") + '</span>';
       toggleBtn.setAttribute("aria-label", label);
       toggleBtn.setAttribute("title", label);
     }

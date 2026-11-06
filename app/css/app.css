@@ -41,14 +41,6 @@ a { color: var(--primary); }
 .sb-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--primary); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .sb-brand strong { font-size: 14.5px; }
 .sb-brand-text { font-size: 14.5px; font-weight: 800; white-space: nowrap; }
-/* One toggle button, one fixed home (top brand row) in both states — it
-   used to be two different buttons in two different rows (top to collapse,
-   bottom to expand), which meant hunting for it every time. */
-.sb-toggle-btn {
-  margin-left: auto; width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface);
-  color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; font-size: 14px; line-height: 1;
-}
-.sb-toggle-btn:hover { background: var(--bg); color: var(--ink); }
 .sb-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .sb-link {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
@@ -65,17 +57,27 @@ a { color: var(--primary); }
 }
 .sb-link:hover { background: var(--bg); color: var(--ink); }
 .sb-link.active { background: var(--primary-light); color: var(--primary-dark); }
+/* One toggle button, one fixed home: its own row at the bottom of the nav,
+   above the footer, in both states — never in the crowded brand row (which
+   overflowed when collapsed) and never jumping between two locations. */
+.sb-toggle-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 0; margin-top: 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); cursor: pointer; font-size: 13px; line-height: 1; flex: 0 0 auto;
+}
+.sb-toggle-btn:hover { background: var(--bg); color: var(--ink); }
+.sb-toggle-label { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 .sb-foot { font-size: 11px; color: var(--muted); padding: 10px 8px 2px; border-top: 1px solid var(--border); margin-top: 10px; white-space: nowrap; overflow: hidden; }
 
-/* ---- collapsed rail: icons only, labels and chrome hidden. The toggle
-   button stays put in the brand row (space-between keeps the mark on the
-   left, the button on the right) instead of relocating. ---- */
+/* ---- collapsed rail: icons only, labels and chrome hidden. ---- */
 .sidebar.collapsed { width: 72px; padding: 18px 8px; }
-.sidebar.collapsed .sb-brand { justify-content: space-between; padding: 6px 0 20px; }
+.sidebar.collapsed .sb-brand { justify-content: center; padding: 6px 0 20px; }
 .sidebar.collapsed .sb-brand-text,
 .sidebar.collapsed .sb-label,
+.sidebar.collapsed .sb-toggle-label,
 .sidebar.collapsed .sb-foot { display: none; }
 .sidebar.collapsed .sb-link { justify-content: center; padding: 10px 0; }
+.sidebar.collapsed .sb-toggle-btn { padding: 8px 0; }
 
 .main-col { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
