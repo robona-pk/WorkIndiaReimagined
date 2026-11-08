@@ -221,15 +221,6 @@
   // built from the data already captured about the candidate plus whatever
   // decision the recruiter has recorded so far, so it reads like a real
   // post-call note rather than a static blurb.
-  function buildRecruiterCallSummary(candidate, decision) {
-    var payStr = "₹" + candidate.payExpectationMin.toLocaleString("en-IN") + "–₹" + candidate.payExpectationMax.toLocaleString("en-IN");
-    var base = candidate.name + " confirmed they're " + candidate.availability.toLowerCase() +
-      ", expects " + payStr + "/month for " + candidate.skills[0].toLowerCase() + ", " + candidate.distanceKm + " km from the job location.";
-    if (decision === "shortlisted") return base + " Good fit on paper and on the call — shortlisted.";
-    if (decision === "notFit") return base + " Didn't line up on fit after talking it through — marked not a fit.";
-    return base + " Awaiting a shortlist decision.";
-  }
-
   function buildCandidatePool(count) {
     var rnd = seededRandom(42);
     var pool = [];
@@ -476,7 +467,6 @@
     MOCK_PAST_JOBS: MOCK_PAST_JOBS,
     estimateCandidateCount: estimateCandidateCount,
     platformCount: platformCount,
-    suggestJobSpec: suggestJobSpec,
-    buildRecruiterCallSummary: buildRecruiterCallSummary
+    suggestJobSpec: suggestJobSpec
   };
 })(window);

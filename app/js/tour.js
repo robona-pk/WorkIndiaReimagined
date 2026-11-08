@@ -34,9 +34,9 @@
       },
       {
         target: '[data-tour="review"]',
-        title: "Mark Relevant to unlock their number",
-        body: "Like a candidate? Mark them <b>Relevant</b> and their contact unlocks. " +
-          "Not a fit? Mark them Not relevant and move to the next one."
+        title: "Shortlist to unlock their number",
+        body: "Like a candidate? Tap <b>Shortlist</b> on their card &mdash; their number unlocks and a <b>Call now</b> button appears right there. " +
+          "Not a fit? Mark them Not relevant."
       },
       {
         target: '[data-tour="calls"]',

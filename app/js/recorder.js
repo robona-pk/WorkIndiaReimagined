@@ -191,12 +191,83 @@
 
   function getLastError() { return lastError; }
 
+  // ---- Transcript of the saved recording itself (not live captions, not
+  // canned text). The recording is decoded to 16 kHz mono and run through
+  // Whisper in a background worker (js/transcribe-worker.js). Resolves the
+  // transcript ("" if no speech was found); rejects if transcription
+  // couldn't run in this browser (e.g. offline on first use). ----
+  var worker = null;
+  var pendingJobs = {};
+
+  function getWorker() {
+    if (worker) return worker;
+    worker = new Worker("js/transcribe-worker.js", { type: "module" });
+    worker.onmessage = function (e) {
+      var m = e.data || {};
+      if (m.type === "progress") return;
+      var job = pendingJobs[m.id];
+      if (!job) return;
+      delete pendingJobs[m.id];
+      if (m.type === "done") job.resolve(m.text || "");
+      else job.reject(new Error(m.error || "Transcription failed"));
+    };
+    worker.onerror = function () {
+      Object.keys(pendingJobs).forEach(function (k) {
+        pendingJobs[k].reject(new Error("Transcription worker failed to load"));
+        delete pendingJobs[k];
+      });
+      worker = null;
+    };
+    return worker;
+  }
+
+  function decodeTo16kMono(blob) {
+    return blob.arrayBuffer().then(function (buf) {
+      var AC = global.AudioContext || global.webkitAudioContext;
+      var ctx = new AC();
+      return new Promise(function (resolve, reject) {
+        ctx.decodeAudioData(buf, resolve, reject);
+      }).then(function (decoded) {
+        try { ctx.close(); } catch (e) { /* ignore */ }
+        var length = Math.max(1, Math.ceil(decoded.duration * 16000));
+        var off = new OfflineAudioContext(1, length, 16000);
+        var src = off.createBufferSource();
+        src.buffer = decoded;
+        src.connect(off.destination);
+        src.start();
+        return off.startRendering();
+      }).then(function (rendered) {
+        return new Float32Array(rendered.getChannelData(0));
+      });
+    });
+  }
+
+  // Whisper tends to "hear" stock phrases in silence; those aren't speech.
+  function cleanTranscript(text) {
+    var t = (text || "").replace(/\s+/g, " ").trim();
+    if (/^(\[[^\]]*\]|\([^)]*\)|\s|thank you\.?|thanks for watching!?\.?|you\.?)*$/i.test(t)) return "";
+    return t;
+  }
+
+  function transcribeRecording(candidateId) {
+    return getRecording(candidateId).then(function (blob) {
+      if (!blob) return "";
+      return decodeTo16kMono(blob).then(function (audio) {
+        return new Promise(function (resolve, reject) {
+          pendingJobs[candidateId] = { resolve: resolve, reject: reject };
+          getWorker().postMessage({ id: candidateId, audio: audio }, [audio.buffer]);
+        });
+      });
+    }).then(cleanTranscript);
+  }
+
   global.WI_RECORDER = {
     startCapture: startCapture,
     stopCapture: stopCapture,
     discardCapture: discardCapture,
     getRecording: getRecording,
     getLastError: getLastError,
+    transcribeRecording: transcribeRecording,
     startTranscription: startTranscription,
     stopTranscription: stopTranscription,
     transcriptionSupported: transcriptionSupported

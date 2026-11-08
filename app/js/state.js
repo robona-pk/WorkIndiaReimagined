@@ -51,6 +51,7 @@
       callDurations: {},         // candidateId -> seconds, recorded when a recruiter call ends
       profileOpenFor: null,      // candidateId whose profile overlay is open, or null
       liveCallRecordings: {},    // candidateId -> true once the recruiter's own mic audio was captured for that call
+      transcriptStatus: {},      // candidateId -> "pending" | "done" | "empty" | "failed" — transcription of the saved call recording
       liveCallTranscripts: {},   // candidateId -> real text transcribed live from the recruiter's mic during that call (empty/absent if speech recognition wasn't available or caught nothing)
       micPermissionDenied: false, // true once the browser mic prompt has been denied/unsupported, so we stop re-asking
       billingTab: "single",      // "single" | "multi" — which pricing tab is showing on Trial & Billing
@@ -86,6 +87,9 @@
       // so merge these two nested objects explicitly.
       merged.candidateFilters = Object.assign(defaultState().candidateFilters, parsed.candidateFilters || {});
       merged.candRailOpen = Object.assign(defaultState().candRailOpen, parsed.candRailOpen || {});
+      // A call can't still be in progress after a reload — don't reopen its overlay.
+      merged.callOverlayFor = null;
+      merged.callPhase = null;
       return merged;
     } catch (e) {
       return defaultState();
@@ -179,7 +183,28 @@
       save(state);
     },
 
+    // One-tap Shortlist from a candidate card: shortlisting IS the unlock
+    // (it counts toward the trial's SHORTLIST_TARGET contacts), so it also
+    // records the profile as reviewed + relevant in one go. Any card can be
+    // shortlisted, in any order — not just the next one in the batch.
+    shortlistFromCard: function (candidateId) {
+      if (state.shortlistedIds.indexOf(candidateId) !== -1) return true;
+      if (!state.subscribed && (state.trialEnded || state.shortlistedIds.length >= global.WI_DATA.SHORTLIST_TARGET)) {
+        state.showPaywall = true;
+        save(state);
+        return false;
+      }
+      if (state.relevantIds.indexOf(candidateId) === -1) {
+        state.relevantIds.push(candidateId);
+        state.reviewed++;
+        state.cursorInBatch++;
+        maybeAdvanceDay();
+      }
+      return Actions.shortlistCandidate(candidateId);
+    },
+
     markNotRelevant: function (candidateId) {
+      if (state.rejectedIds.indexOf(candidateId) !== -1 || state.relevantIds.indexOf(candidateId) !== -1) return;
       state.rejectedIds.push(candidateId);
       state.reviewed++;
       state.cursorInBatch++;
@@ -224,6 +249,11 @@
     // the UI, which only shows a transcript-based summary when this is non-empty.
     setCallTranscript: function (candidateId, text) {
       state.liveCallTranscripts[candidateId] = text || "";
+      save(state);
+    },
+
+    setTranscriptStatus: function (candidateId, status) {
+      state.transcriptStatus[candidateId] = status;
       save(state);
     },
 

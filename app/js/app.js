@@ -104,6 +104,7 @@
     renderShellChrome();
     wireViewActions();
     wireRecruiterCallAudios();
+    if (route === "calls") setTimeout(resumePendingTranscripts, 0);
 
     if (route === "dashboard" && !st.tourSeen && window.WI_TOUR && !window.WI_TOUR.isOpen()) {
       setTimeout(function () { startTour(); }, 350);
@@ -317,6 +318,10 @@
       case "end-call":
         endCall();
         break;
+      case "close-call":
+        closeCallOverlay();
+        render();
+        break;
       case "call-shortlist":
         S.markShortlisted(id);
         closeCallOverlay();
@@ -360,9 +365,18 @@
         var rAudio = document.getElementById("rcallAudio-" + id);
         if (rAudio) { if (rAudio.paused) rAudio.play(); else rAudio.pause(); }
         break;
+      case "retry-transcript":
+        transcribeCall(id);
+        render();
+        break;
       case "toggle-summary":
         var sumBox = document.getElementById("rcallSummary-" + id);
-        if (sumBox) sumBox.style.display = sumBox.style.display === "none" ? "block" : "none";
+        if (sumBox) {
+          var opening = sumBox.style.display === "none";
+          sumBox.style.display = opening ? "block" : "none";
+          window.__openTranscripts = window.__openTranscripts || {};
+          window.__openTranscripts[id] = opening; // stays open when the transcript finishes and the list re-renders
+        }
         break;
       case "view-profile":
         document.querySelectorAll("audio").forEach(function (a) { a.pause(); });
@@ -382,7 +396,7 @@
         render();
         break;
       case "shortlist-from-card":
-        S.shortlistCandidate(id);
+        S.shortlistFromCard(id);
         render();
         break;
       case "close-paywall":
@@ -514,7 +528,6 @@
       if (s.callOverlayFor !== id) return; // overlay was cancelled/closed while the permission prompt was up
       if (started) {
         S.setMicPermissionDenied(false);
-        window.WI_RECORDER.startTranscription(); // best-effort — unsupported browsers just won't produce a transcript
         beginConnectingFlow(id);
       } else {
         S.setMicPermissionDenied(true);
@@ -555,21 +568,53 @@
     var st = S.get();
     var id = st.callOverlayFor;
     if (id) S.recordCallDuration(id, st.callSeconds || 0);
-    // Grab the transcript synchronously at hang-up, before anything else
-    // touches the recognizer — stopCapture() below is async and we don't
-    // want a race where a second call starts before this one's transcript
-    // is read out.
-    var transcript = window.WI_RECORDER ? window.WI_RECORDER.stopTranscription() : "";
-    if (id) S.setCallTranscript(id, transcript);
+    // The transcript comes from the saved recording itself (Whisper, run
+    // in the browser on the actual audio) — not from live captions and
+    // never from canned text. A new call replaces the old transcript.
+    if (id) { S.setCallTranscript(id, ""); S.setTranscriptStatus(id, "pending"); }
     st.callPhase = "shortlist";
     render();
     if (id && window.WI_RECORDER) {
       window.WI_RECORDER.stopCapture(id).then(function (blob) {
         S.markLiveRecording(id, !!blob);
         delete rcallObjectUrls[id]; // force a fresh fetch so the just-saved recording picks up
-        if (currentRoute() === "calls") render(); // re-render so the done-row picks up the new recording flag
+        if (blob) transcribeCall(id);
+        else S.setTranscriptStatus(id, "none");
+        rerenderIfListing();
       });
     }
+  }
+
+  function rerenderIfListing() {
+    var r = currentRoute();
+    if ((r === "calls" || r === "candidates") && !S.get().callOverlayFor) render();
+  }
+
+  var transcribing = {}; // candidateId -> true while a transcription job is running in this tab
+  function transcribeCall(id) {
+    if (transcribing[id] || !window.WI_RECORDER || !window.WI_RECORDER.transcribeRecording) return;
+    transcribing[id] = true;
+    S.setTranscriptStatus(id, "pending");
+    window.WI_RECORDER.transcribeRecording(id).then(function (text) {
+      S.setCallTranscript(id, text);
+      S.setTranscriptStatus(id, text ? "done" : "empty");
+    }).catch(function () {
+      S.setTranscriptStatus(id, "failed");
+    }).then(function () {
+      delete transcribing[id];
+      rerenderIfListing();
+    });
+  }
+
+  // Recordings saved earlier (or interrupted by a reload mid-transcription)
+  // get transcribed when the Calls tab is opened.
+  function resumePendingTranscripts() {
+    var st = S.get();
+    Object.keys(st.liveCallRecordings || {}).forEach(function (id) {
+      if (!st.liveCallRecordings[id]) return;
+      var status = (st.transcriptStatus || {})[id];
+      if (!status || status === "pending") transcribeCall(id);
+    });
   }
 
   var recordings = {}; // candId -> { elapsed, interval, duration, transcript }

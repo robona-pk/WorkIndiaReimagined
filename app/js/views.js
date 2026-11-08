@@ -310,7 +310,7 @@
           '<p class="section-title">What\'s happened so far</p>' +
           timelineItem("Job posted &amp; live", true) +
           timelineItem("First candidate AI-screened and reviewed", reviewed > 0) +
-          timelineItem("First contact unlocked (marked Relevant)", relevant > 0) +
+          timelineItem("First candidate shortlisted (number unlocked)", relevant > 0) +
           timelineItem("First call connected via platform", calls > 0) +
           timelineItem(D.SHORTLIST_TARGET + " candidates shortlisted", shortlisted >= D.SHORTLIST_TARGET) +
           timelineItem("Hire confirmed", st.hireConfirmed) +
@@ -364,10 +364,27 @@
     var exhausted = S.batchExhausted();
     var batchLabel = "Batch " + (st.batchIndex + 1) + " of 3";
 
+    var byIdAll = {};
+    D.CANDIDATE_POOL.forEach(function (c) { byIdAll[c.id] = c; });
+    var overlays =
+      (st.callOverlayFor ? renderCallOverlay(byIdAll[st.callOverlayFor]) : "") +
+      (st.showPaywall ? renderPaywall() : "") +
+      (st.paymentStep ? renderPaymentModal() : "");
+
+    // Trial over: no new profiles to review, but the candidates already
+    // shortlisted (= unlocked) stay right here with a Call CTA — the
+    // employer earned those contacts and must be able to reach them.
     if (st.trialEnded) {
-      return '<div class="card">' +
-        '<p class="section-title">Trial complete</p>' +
-        '<p class="section-sub">Candidate review ended for this trial. <a href="#/billing">See the full result &rarr;</a></p>' +
+      var shortCards = st.shortlistedIds.map(function (id) { return byIdAll[id] ? candidateCard(byIdAll[id], st) : ""; }).join("");
+      return '<div>' +
+        '<div class="card" style="margin-bottom:18px;">' +
+          '<p class="section-title">Trial complete</p>' +
+          '<p class="section-sub" style="margin-bottom:0;">' +
+            (st.shortlistedIds.length ? "Call your shortlisted candidates below. " : "") +
+            'To review more profiles, <a href="#/billing">pick a plan &rarr;</a></p>' +
+        '</div>' +
+        (shortCards ? '<div class="cand-grid">' + shortCards + '</div>' : "") +
+        overlays +
       '</div>';
     }
 
@@ -383,54 +400,10 @@
 
     var filters = st.candidateFilters;
     var shownCount = 0;
-    var cards = batch.map(function (c, i) {
+    var cards = batch.map(function (c) {
       if (!candidateMatchesFilters(c, filters)) return null;
       shownCount++;
-
-      var decided = i < st.cursorInBatch;
-      var isRelevant = st.relevantIds.indexOf(c.id) !== -1;
-      var isRejected = st.rejectedIds.indexOf(c.id) !== -1;
-      var isCurrent = i === st.cursorInBatch;
-
-      var isShortlisted = st.shortlistedIds.indexOf(c.id) !== -1;
-      var statusRow = "";
-      if (isRelevant) {
-        var called = st.calledIds.indexOf(c.id) !== -1;
-        statusRow = '<div class="unlocked-row"><span>&#128274; Contact unlocked</span>' +
-          (called ? '<span class="pill muted">Called</span>' : '<a href="#/calls" class="btn ghost" style="padding:6px 12px;font-size:11.5px;text-decoration:none;">Call via platform &rarr;</a>') +
-        '</div>' +
-        (isShortlisted
-          ? '<div class="unlocked-row" style="background:var(--success-light);color:var(--success);"><span>&#11088; Shortlisted</span></div>'
-          : '<button class="btn outline-shortlist full" data-action="shortlist-from-card" data-id="' + c.id + '">&#11088; Shortlist candidate</button>'
-        );
-      } else if (isRejected) {
-        statusRow = '<div class="unlocked-row" style="background:var(--bg);color:var(--muted);"><span>Marked not relevant</span></div>';
-      }
-
-      return (
-        '<div class="cand-card ' + (decided ? "done" : "") + '">' +
-          '<div class="cand-top">' +
-            '<div><div class="cand-name">' + esc(c.name) + '</div><div class="cand-meta">' + c.age + 'y &middot; ' + c.gender + ' &middot; ' + c.area + ' (' + c.distanceKm + ' km) &middot; ' + c.experienceYears + ' yrs exp &middot; ' + c.education + '</div></div>' +
-            '<div class="cand-badges">' +
-              '<span class="badge-ai">&#10024; AI-verified</span>' +
-              (c.verified ? '<span class="badge-id-verified" title="Aadhaar/PAN verified">&#128274; ID Verified</span>' : '') +
-              '<span class="cand-last-active">' + activeRecencyLabel(c.lastActiveDaysAgo) + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="skills-row">' + c.skills.map(function (s) { return '<span class="skill-tag">' + s + '</span>'; }).join("") + '</div>' +
-          '<div class="ai-facts">' +
-            '<div class="ai-fact"><span class="dot2"></span><span><b>' + c.availability + '</b></span></div>' +
-            '<div class="ai-fact"><span class="dot2"></span><span>Expects &#8377;' + c.payExpectationMin.toLocaleString("en-IN") + '&ndash;&#8377;' + c.payExpectationMax.toLocaleString("en-IN") + '</span></div>' +
-            '<div class="ai-fact"><span class="dot2"></span><span>' + c.language + ' &middot; ' + c.englishLevel + '</span></div>' +
-          '</div>' +
-          renderCallRecording(c) +
-          (isCurrent ? '<div class="cand-actions">' +
-            '<button class="btn outline-danger" data-action="mark-not-relevant" data-id="' + c.id + '">Not relevant</button>' +
-            '<button class="btn success" data-action="mark-relevant" data-id="' + c.id + '">Relevant</button>' +
-          '</div>' : "") +
-          statusRow +
-        '</div>'
-      );
+      return candidateCard(c, st);
     }).filter(function (html) { return html; }).join("");
 
     var filtersActive = filters.verifiedOnly || filters.activeCandidatesOnly || filters.distance !== "any" || filters.activeIn !== "any" ||
@@ -444,14 +417,64 @@
         renderCandidateRail(st, shownCount, batch.length) +
         '<div class="cand-main">' +
           '<div class="batch-head">' +
-            '<div><p class="section-title" style="margin-bottom:2px;">' + batchLabel + '</p><p class="section-sub" style="margin-bottom:0;">AI pre-screened by voice before you see them &mdash; mark Relevant to unlock contact.</p></div>' +
+            '<div><p class="section-title" style="margin-bottom:2px;">' + batchLabel + '</p><p class="section-sub" style="margin-bottom:0;">AI pre-screened by voice before you see them &mdash; shortlist a candidate to unlock their number and call them.</p></div>' +
             '<span class="pill muted">' + st.cursorInBatch + '/10 reviewed this batch</span>' +
           '</div>' +
           '<div class="trial-shortlist-note">You can shortlist up to <b>' + D.SHORTLIST_TARGET + ' candidates</b> on this trial &middot; ' + st.shortlistedIds.length + '/' + D.SHORTLIST_TARGET + ' used</div>' +
           (emptyState || '<div class="cand-grid">' + cards + '</div>') +
         '</div>' +
-        (st.showPaywall ? renderPaywall() : "") +
-        (st.paymentStep ? renderPaymentModal() : "") +
+        overlays +
+      '</div>'
+    );
+  }
+
+  // One candidate card on the Candidates tab. Every undecided card carries
+  // its own actions (Not relevant / Shortlist) so the employer can act on
+  // any profile, in any order. Shortlisting unlocks the number, and the
+  // card then offers a direct "Call now" via masked platform calling.
+  function candidateCard(c, st) {
+    var isShortlisted = st.shortlistedIds.indexOf(c.id) !== -1;
+    var isRelevant = st.relevantIds.indexOf(c.id) !== -1;
+    var isRejected = st.rejectedIds.indexOf(c.id) !== -1;
+    var called = st.calledIds.indexOf(c.id) !== -1;
+
+    var actions;
+    if (isShortlisted || isRelevant) {
+      actions = '<div class="unlocked-row" style="background:var(--success-light);color:var(--success);">' +
+          '<span>' + (isShortlisted ? '&#11088; Shortlisted &middot; number unlocked' : '&#128275; Number unlocked') + '</span>' +
+          (called ? '<span class="pill muted">Called</span>' : '') +
+        '</div>' +
+        '<div class="cand-actions">' +
+          (isShortlisted ? '' : '<button class="btn outline-shortlist" data-action="shortlist-from-card" data-id="' + c.id + '">&#11088; Shortlist</button>') +
+          '<button class="btn primary" data-action="open-call" data-id="' + c.id + '">&#128222; ' + (called ? 'Call again' : 'Call now') + '</button>' +
+        '</div>';
+    } else if (isRejected) {
+      actions = '<div class="unlocked-row" style="background:var(--bg);color:var(--muted);"><span>Marked not relevant</span></div>';
+    } else {
+      actions = '<div class="cand-actions">' +
+        '<button class="btn outline-danger" data-action="mark-not-relevant" data-id="' + c.id + '">Not relevant</button>' +
+        '<button class="btn success" data-action="shortlist-from-card" data-id="' + c.id + '">&#11088; Shortlist</button>' +
+      '</div>';
+    }
+
+    return (
+      '<div class="cand-card ' + (isRejected ? "done" : "") + '">' +
+        '<div class="cand-top">' +
+          '<div><div class="cand-name">' + esc(c.name) + '</div><div class="cand-meta">' + c.age + 'y &middot; ' + c.gender + ' &middot; ' + c.area + ' (' + c.distanceKm + ' km) &middot; ' + c.experienceYears + ' yrs exp &middot; ' + c.education + '</div></div>' +
+          '<div class="cand-badges">' +
+            '<span class="badge-ai">&#10024; AI-verified</span>' +
+            (c.verified ? '<span class="badge-id-verified" title="Aadhaar/PAN verified">&#128274; ID Verified</span>' : '') +
+            '<span class="cand-last-active">' + activeRecencyLabel(c.lastActiveDaysAgo) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="skills-row">' + c.skills.map(function (s) { return '<span class="skill-tag">' + s + '</span>'; }).join("") + '</div>' +
+        '<div class="ai-facts">' +
+          '<div class="ai-fact"><span class="dot2"></span><span><b>' + c.availability + '</b></span></div>' +
+          '<div class="ai-fact"><span class="dot2"></span><span>Expects &#8377;' + c.payExpectationMin.toLocaleString("en-IN") + '&ndash;&#8377;' + c.payExpectationMax.toLocaleString("en-IN") + '</span></div>' +
+          '<div class="ai-fact"><span class="dot2"></span><span>' + c.language + ' &middot; ' + c.englishLevel + '</span></div>' +
+        '</div>' +
+        renderCallRecording(c) +
+        actions +
       '</div>'
     );
   }
@@ -750,21 +773,25 @@
       var durSec = st.callDurations[id];
       if (durSec === undefined) durSec = 60 + (id.charCodeAt(id.length - 1) * 7) % 180; // fallback for pre-existing demo state
       var hasRecording = !!(st.liveCallRecordings && st.liveCallRecordings[id]);
-      // Prefer the real transcript captured live from the recruiter's mic
-      // during this call (see js/recorder.js) over any derived text — this
-      // is literally what was said, not a guess at what probably was.
-      // Browsers without SpeechRecognition (or a call made before this
-      // existed) fall back to the old decision-based line, labeled as such.
+      // Transcript of this call's saved recording (Whisper, in-browser —
+      // see js/recorder.js). Never filled with made-up text: if there's no
+      // recording or nothing could be transcribed, say exactly that.
       var transcript = (st.liveCallTranscripts && st.liveCallTranscripts[id]) || "";
-      var summaryLabel, summary;
+      var tStatus = (st.transcriptStatus || {})[id];
+      var summaryLabel, summary = "";
       if (transcript) {
-        summaryLabel = "Transcript of this call (captured live)";
-        summary = transcript;
+        summaryLabel = "Transcript of your call recording";
+        summary = esc(transcript);
+      } else if (!hasRecording) {
+        summaryLabel = "No recording was saved for this call, so there&rsquo;s no transcript.";
+      } else if (tStatus === "empty") {
+        summaryLabel = "No speech was detected in this recording.";
+      } else if (tStatus === "failed") {
+        summaryLabel = "Couldn&rsquo;t transcribe this recording in this browser.";
+        summary = '<button type="button" class="btn ghost" style="padding:6px 12px;font-size:11.5px;margin-top:6px;" data-action="retry-transcript" data-id="' + id + '">Try again</button>';
       } else {
-        summaryLabel = window.WI_RECORDER && window.WI_RECORDER.transcriptionSupported()
-          ? "No speech was picked up on this call &mdash; not a transcript:"
-          : "This browser can&rsquo;t transcribe calls live &mdash; not a transcript:";
-        summary = D.buildRecruiterCallSummary(c, decision);
+        summaryLabel = "Transcribing your call recording&hellip;";
+        summary = '<span class="hint">The first transcript takes a little longer while the speech model downloads.</span>';
       }
 
       var callRow = hasRecording
@@ -783,11 +810,11 @@
             tag +
           '</div>' +
           '<div class="cl-call-row">' + callRow +
-            '<button type="button" class="btn ghost cl-summary-btn" data-action="toggle-summary" data-id="' + id + '">Summary</button>' +
+            '<button type="button" class="btn ghost cl-summary-btn" data-action="toggle-summary" data-id="' + id + '">Transcript</button>' +
           '</div>' +
-          '<div class="cl-summary-box" id="rcallSummary-' + id + '" style="display:none;">' +
+          '<div class="cl-summary-box" id="rcallSummary-' + id + '" style="display:' + ((window.__openTranscripts || {})[id] ? 'block' : 'none') + ';">' +
             '<div class="cl-summary-label">' + summaryLabel + '</div>' +
-            esc(summary) +
+            summary +
           '</div>' +
         '</div>'
       );
@@ -796,18 +823,25 @@
     // Once the trial has ended (contact unlocks used up, sample exhausted,
     // or the 3-day window closed), no new calls can be placed — only past
     // call history stays reviewable. Mirrors the gate on the Candidates tab.
+    // After the trial ends, candidates already shortlisted (= unlocked)
+    // can still be called; nothing new can be unlocked without a plan.
+    var waitingShort = waiting.filter(function (id) { return st.shortlistedIds.indexOf(id) !== -1; });
     var readyCard = st.trialEnded
-      ? '<div class="card" style="margin-bottom:18px;"><p class="section-title">Trial complete</p><p class="section-sub">Calling is part of the paid plan now. <a href="#/billing">See what your trial found &rarr;</a></p></div>'
+      ? '<div class="card" style="margin-bottom:18px;"><p class="section-title">Trial complete</p>' +
+          (waitingShort.length
+            ? '<p class="section-sub">You can still call the candidates you shortlisted. To unlock more, <a href="#/billing">pick a plan &rarr;</a></p>' + waitingShort.map(waitingRow).join("")
+            : '<p class="section-sub">To unlock and call more candidates, <a href="#/billing">pick a plan &rarr;</a></p>') +
+        '</div>'
       : ('<div class="card" style="margin-bottom:18px;">' +
           '<p class="section-title">Ready to call</p>' +
           '<p class="section-sub">Masked, platform-only. No external number is ever shown &mdash; a call must connect to count toward your trial.</p>' +
-          (waiting.length ? waiting.map(waitingRow).join("") : '<p class="hint">No unlocked candidates waiting right now &mdash; mark some Relevant on the <a href="#/candidates">Candidates</a> page first.</p>') +
+          (waiting.length ? waiting.map(waitingRow).join("") : '<p class="hint">No unlocked candidates waiting right now &mdash; shortlist some on the <a href="#/candidates">Candidates</a> page first.</p>') +
         '</div>');
 
     return (
       '<div>' +
         readyCard +
-        (called.length ? '<div class="card"><p class="section-title">Call history</p><p class="section-sub">Tap a name to open the full profile. Each call has its own recording and a quick summary.</p>' + called.map(doneRow).join("") + '</div>' : "") +
+        (called.length ? '<div class="card"><p class="section-title">Call history</p><p class="section-sub">Tap a name to open the full profile. Each call has its own recording and its transcript.</p>' + called.map(doneRow).join("") + '</div>' : "") +
         (st.callOverlayFor ? renderCallOverlay(byId[st.callOverlayFor]) : "") +
         (st.profileOpenFor ? renderCandidateProfileOverlay(byId[st.profileOpenFor]) : "") +
         (st.showPaywall ? renderPaywall() : "") +
@@ -861,7 +895,9 @@
             '<p class="section-sub">Based on the actual conversation, not just the profile.</p>' +
             '<div class="row">' +
               '<button class="btn outline-danger" style="flex:1" data-action="call-not-fit" data-id="' + candidate.id + '">Not a fit</button>' +
-              '<button class="btn success" style="flex:1" data-action="call-shortlist" data-id="' + candidate.id + '">Shortlist</button>' +
+              (st.shortlistedIds.indexOf(candidate.id) !== -1
+                ? '<button class="btn primary" style="flex:1" data-action="close-call" data-id="' + candidate.id + '">Still a fit &mdash; done</button>'
+                : '<button class="btn success" style="flex:1" data-action="call-shortlist" data-id="' + candidate.id + '">Shortlist</button>') +
             '</div>' +
           '</div>' +
         '</div>'
