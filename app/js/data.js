@@ -346,6 +346,36 @@
     return 8000 + (h % 37000);
   }
 
+  // Platform-wide counts for when the visitor hasn't picked a role and/or
+  // city. City totals match the city chips on the landing page; the
+  // pan-India active figure is a demo placeholder — swap in the real number.
+  var PAN_INDIA_ACTIVE = 12000000;
+  var CITY_TOTALS = {
+    "delhi ncr": 12000000, "mumbai": 11000000, "bengaluru": 8500000,
+    "hyderabad": 7000000, "kolkata": 6000000, "pune": 5500000
+  };
+
+  function hashStr(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; }
+    return h;
+  }
+
+  // Returns { count, scope } where scope is "role-city" | "city" | "role" | "india".
+  //  - no role, no city  -> people active on WorkIndia pan-India
+  //  - city only         -> total people on WorkIndia in that city
+  //  - role only         -> candidates for that role across India
+  //  - role + city       -> the existing role+city estimate
+  function platformCount(role, city) {
+    if (role && city) return { count: estimateCandidateCount(role, city), scope: "role-city" };
+    if (city) {
+      var known = CITY_TOTALS[city.toLowerCase()];
+      return { count: known || (500000 + (hashStr(city.toLowerCase()) % 3500000)), scope: "city" };
+    }
+    if (role) return { count: 200000 + (hashStr(role.toLowerCase()) % 1000000), scope: "role" };
+    return { count: PAN_INDIA_ACTIVE, scope: "india" };
+  }
+
   // A rough, explainable AI-generated job spec from just a role + city —
   // mirrors the one genuinely useful bit of the real platform's posting flow.
   function suggestJobSpec(role) {
@@ -445,6 +475,7 @@
     CATEGORIES: CATEGORIES,
     MOCK_PAST_JOBS: MOCK_PAST_JOBS,
     estimateCandidateCount: estimateCandidateCount,
+    platformCount: platformCount,
     suggestJobSpec: suggestJobSpec,
     buildRecruiterCallSummary: buildRecruiterCallSummary
   };

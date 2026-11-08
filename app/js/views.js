@@ -96,7 +96,13 @@
   // three separate clicks.
   function renderCandidateCount() {
     var st = S.get();
-    var count = D.estimateCandidateCount(st.searchRole, st.searchCity);
+    var pc = D.platformCount(st.searchRole, st.searchCity);
+    var count = pc.count;
+    var countLabel =
+      pc.scope === "india" ? 'people active on WorkIndia across <b>India</b>' :
+      pc.scope === "city" ? 'people on WorkIndia in <b>' + esc(st.searchCity) + '</b>' :
+      pc.scope === "role" ? 'candidates for <b>' + esc(st.searchRole) + '</b> across <b>India</b>' :
+      'candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b>';
     return (
       '<div class="onb-wrap flow-step split-step" data-count-target="' + count + '">' +
         '<div class="flow-progress">Step 2 of 3 &middot; Candidates &amp; login</div>' +
@@ -106,7 +112,7 @@
             '<div class="card split-card">' +
               '<div class="count-hero">' +
                 '<div class="count-num" id="countNum">0</div>' +
-                '<p class="count-label">candidates found for <b>' + esc(st.searchRole) + '</b> near <b>' + esc(st.searchCity) + '</b></p>' +
+                '<p class="count-label">' + countLabel + '</p>' +
               '</div>' +
               '<div class="split-divider"></div>' +
               '<div class="reveal-after-count" id="pricingReveal" style="opacity:0;">' +
@@ -176,6 +182,7 @@
   function renderJobPostingAI() {
     var st = S.get();
     var spec = D.suggestJobSpec(st.searchRole);
+    var badgeFor = [st.searchRole, st.searchCity].filter(Boolean).map(esc).join(' &middot; ');
     return (
       '<div class="onb-wrap flow-step" style="max-width:640px;">' +
         renderHowItWorksStrip() +
@@ -184,7 +191,7 @@
           '<div class="progress-bar-track"><div class="progress-bar-fill" id="postProgressFill" style="width:60%"></div></div>' +
         '</div>' +
         '<form id="postingForm" class="card">' +
-          '<div class="ai-badge-row">&#10024; AI-drafted for ' + esc(st.searchRole) + ' &middot; ' + esc(st.searchCity) + '</div>' +
+          '<div class="ai-badge-row">&#10024; AI-drafted' + (badgeFor ? ' for ' + badgeFor : '') + '</div>' +
 
           '<div class="field-mini-label">Your company</div>' +
           '<div class="row">' +
@@ -197,10 +204,14 @@
             '<div class="field" style="flex:1"><select name="companySize">' +
               ['1–10 employees', '11–50 employees', '51–200 employees', '200+ employees'].map(function (o) { return '<option>' + o + '</option>'; }).join("") +
             '</select></div>' +
-            '<div class="field" style="flex:1"><input name="companyLocation" type="text" placeholder="Office location" value="' + esc(st.searchCity) + '"></div>' +
+            '<div class="field" style="flex:1"><input name="companyLocation" list="cityList" type="text" placeholder="Office location" value="' + (st.searchCity ? esc(st.searchCity) : '') + '"' + (st.searchCity ? '' : ' required') + '></div>' +
           '</div>' +
 
           '<div class="field-mini-label">Job requirements</div>' +
+          // No role picked on the landing page: ask for the job title here,
+          // inside this same step, rather than adding a new screen.
+          (st.searchRole ? '' :
+            '<div class="field"><input name="jobTitle" list="roleList" type="text" placeholder="Job title, e.g. Delivery Executive" required></div>') +
           '<div class="chip-field-row">' +
             chipField("experience", spec.experience, ["0–1 years", "0–2 years", "1–3 years", "3–5 years"]) +
             chipField("education", spec.education, ["No minimum", "10th pass", "12th pass", "Graduate"]) +
@@ -221,6 +232,8 @@
             '<span class="id-verify-toggle-title">Require Aadhaar/PAN verification to apply</span>' +
           '</label>' +
 
+          '<datalist id="roleList">' + D.ROLE_SUGGESTIONS.map(function (r) { return '<option value="' + r + '">'; }).join("") + '</datalist>' +
+          '<datalist id="cityList">' + D.CITY_SUGGESTIONS.map(function (c) { return '<option value="' + c + '">'; }).join("") + '</datalist>' +
           '<button type="submit" class="btn primary full">Make job live &rarr;</button>' +
         '</form>' +
       '</div>'

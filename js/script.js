@@ -36,15 +36,16 @@
   // takes the role + city straight into the app at the candidate-count step
   // (which is also where the phone-number/OTP form lives), skipping its own
   // separate search screen entirely. Leaving role/city blank and submitting
-  // anyway is a valid way in too — it should land the visitor on that same
-  // phone-number screen rather than blocking them, so empty fields fall back
-  // to representative defaults instead of stopping the redirect.
+  // anyway is a valid way in too — it lands the visitor on that same
+  // phone-number screen. Blank fields are passed through as blank (not
+  // swapped for a default role/city), so the count screen can show the
+  // pan-India or whole-city platform count instead of a made-up search.
   var form = document.getElementById("hero-form");
   if (form) {
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var role = document.getElementById("heroRole").value.trim() || "Delivery Executive";
-      var city = document.getElementById("heroCity").value.trim() || "Mumbai";
+      var role = document.getElementById("heroRole").value.trim();
+      var city = document.getElementById("heroCity").value.trim();
       window.location.href = "app/?role=" + encodeURIComponent(role) + "&city=" + encodeURIComponent(city);
     });
   }

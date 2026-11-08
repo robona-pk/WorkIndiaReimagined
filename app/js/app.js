@@ -233,8 +233,8 @@
         var fd = new FormData(postingForm);
         var st = S.get();
         S.confirmJobPosting({
-          title: st.searchRole,
-          city: st.searchCity,
+          title: st.searchRole || (fd.get("jobTitle") || "").trim(),
+          city: st.searchCity || (fd.get("companyLocation") || "").trim(),
           experience: fd.get("experience"),
           education: fd.get("education"),
           gender: fd.get("gender"),
@@ -659,9 +659,12 @@
 
   function applyIncomingSearch() {
     var params = new URLSearchParams(location.search);
-    var role = params.get("role");
-    var city = params.get("city");
-    if (!role || !city) return;
+    // Either param being present (even blank) means the visitor came from
+    // the landing page search. Blank role and/or city is allowed: the count
+    // screen then shows the pan-India or whole-city platform count.
+    if (!params.has("role") && !params.has("city")) return;
+    var role = (params.get("role") || "").trim() || null;
+    var city = (params.get("city") || "").trim() || null;
     // Arriving with ?role=&city= means someone just submitted the landing
     // page's "Start Hiring" search — that's an explicit request to walk
     // through the demo flow, so always start fresh. Without this, a
