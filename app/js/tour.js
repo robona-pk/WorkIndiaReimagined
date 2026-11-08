@@ -47,8 +47,7 @@
       {
         target: '[data-tour="trial-stats"]',
         title: "How your trial works",
-        body: "Your trial ends when you shortlist <b>" + D.SHORTLIST_TARGET + "</b> candidates, review all <b>" +
-          D.TOTAL_ALLOCATION + "</b> profiles, or after <b>" + D.TRIAL_DAY_CAP + " days</b> &mdash; whichever comes first. " +
+        body: "Your trial ends when you shortlist <b>" + D.SHORTLIST_TARGET + "</b> candidates or after <b>" + D.TRIAL_DAY_CAP + " days</b> &mdash; whichever comes first. " +
           "Track your progress here."
       },
       {
