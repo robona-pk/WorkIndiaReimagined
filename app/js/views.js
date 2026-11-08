@@ -262,45 +262,10 @@
     );
   }
 
-  // ---------------- Step: hot leads (dashboard of leads relevant to this job) ----------------
-  function renderHotLeadsStep() {
-    var leads = D.CANDIDATE_POOL.slice(0, 3);
-    return (
-      '<div class="onb-wrap flow-step" style="max-width:600px;">' +
-        '<div class="flow-progress">Your job is live &middot; hot leads ready</div>' +
-        '<h1 class="onb-title">AI already called 3 candidates for you</h1>' +
-        '<p class="onb-sub">Listen to the real screening call before you commit to a full batch.</p>' +
-        leads.map(function (c) { return renderLeadCard(c); }).join("") +
-        '<button class="btn primary full" data-action="start-trial">Start my trial &amp; review all candidates &rarr;</button>' +
-      '</div>'
-    );
-  }
-
   // ---------------- Naukri-style rich candidate/lead card ----------------
   function avatarInitials(name) {
     var parts = String(name).split(" ");
     return (parts[0] ? parts[0][0] : "") + (parts[1] ? parts[1][0] : "");
-  }
-
-  function renderLeadCard(c) {
-    return (
-      '<div class="lead-card">' +
-        '<div class="lead-top">' +
-          '<div class="lead-avatar">' + avatarInitials(c.name) + '</div>' +
-          '<div class="lead-id">' +
-            '<div class="lead-name">' + esc(c.name) + ' <span class="badge-ai">&#10024; AI-verified</span></div>' +
-            '<div class="lead-meta">' + c.age + ' yrs &middot; ' + c.experienceYears + ' yrs exp &middot; ' + c.area + ' (' + c.distanceKm + ' km away)</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="skills-row">' + c.skills.map(function (s) { return '<span class="skill-tag">' + s + '</span>'; }).join("") + '</div>' +
-        '<div class="ai-facts">' +
-          '<div class="ai-fact"><span class="dot2"></span><span><b>' + c.availability + '</b></span></div>' +
-          '<div class="ai-fact"><span class="dot2"></span><span>Expects &#8377;' + c.payExpectationMin.toLocaleString("en-IN") + '&ndash;&#8377;' + c.payExpectationMax.toLocaleString("en-IN") + '</span></div>' +
-          '<div class="ai-fact"><span class="dot2"></span><span>' + c.language + '</span></div>' +
-        '</div>' +
-        renderCallRecording(c) +
-      '</div>'
-    );
   }
 
   // ---------------- Dashboard ----------------
@@ -324,7 +289,7 @@
     return (
       '<div>' +
         endBanner +
-        '<div class="stat-row">' +
+        '<div class="stat-row" data-tour="trial-stats">' +
           '<div class="stat-box"><div class="n">' + reviewed + '/' + D.TOTAL_ALLOCATION + '</div><div class="l">profiles reviewed</div></div>' +
           '<div class="stat-box"><div class="n">' + shortlisted + '/' + D.SHORTLIST_TARGET + '</div><div class="l">shortlisted</div></div>' +
           '<div class="stat-box"><div class="n">Day ' + st.day + '/' + D.TRIAL_DAY_CAP + '</div><div class="l">of trial</div></div>' +
@@ -336,8 +301,8 @@
           '<div class="progress-bar-track" style="margin-bottom:8px;"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>' +
           '<p class="hint">Trial allocation used: ' + reviewed + ' of ' + D.TOTAL_ALLOCATION + ' profiles</p>' +
           '<div class="row" style="margin-top:14px;">' +
-            '<a href="#/candidates" class="btn primary" style="text-decoration:none;">Review candidates</a>' +
-            '<a href="#/calls" class="btn ghost" style="text-decoration:none;">Go to calls (' + Math.max(0, relevant - calls) + ' waiting)</a>' +
+            '<a href="#/candidates" class="btn primary" style="text-decoration:none;" data-tour="review">Review candidates</a>' +
+            '<a href="#/calls" class="btn ghost" style="text-decoration:none;" data-tour="calls">Go to calls (' + Math.max(0, relevant - calls) + ' waiting)</a>' +
           '</div>' +
         '</div>' +
 
@@ -350,6 +315,7 @@
           timelineItem(D.SHORTLIST_TARGET + " candidates shortlisted", shortlisted >= D.SHORTLIST_TARGET) +
           timelineItem("Hire confirmed", st.hireConfirmed) +
         '</div>' +
+        '<p class="hint" style="margin-top:14px;text-align:center;"><a href="javascript:void(0)" data-action="replay-tour">New here? Take the 1-minute tour</a></p>' +
       '</div>'
     );
   }
@@ -1309,7 +1275,6 @@
     count: renderCandidateCount,
     posting: renderJobPostingAI,
     matching: renderMatchingLoader,
-    hotleads: renderHotLeadsStep,
     dashboard: renderDashboard,
     jobs: renderJobsPage,
     candidates: renderCandidates,

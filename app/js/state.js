@@ -12,7 +12,8 @@
     return {
       onboarded: false,
       sidebarCollapsed: false,   // left nav rail — collapsed to icons-only when true
-      flowStep: "search",        // "search" | "count" (candidates+trial+login) | "posting" | "matching" | "hotleads"
+      flowStep: "search",        // "search" | "count" (candidates+trial+login) | "posting" | "matching" (then straight to the dashboard)
+      tourSeen: false,           // first-time guided tour of the dashboard — shown once, replayable from the dashboard
       searchRole: null,
       searchCity: null,
       draftJob: null,            // AI-suggested job spec, built on the posting step
@@ -105,6 +106,11 @@
 
     resetAll: function () {
       state = defaultState();
+      save(state);
+    },
+
+    markTourSeen: function () {
+      state.tourSeen = true;
       save(state);
     },
 

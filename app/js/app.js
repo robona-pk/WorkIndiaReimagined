@@ -59,6 +59,7 @@
       document.getElementById("appShell").style.display = "none";
       document.getElementById("onboardRoot").style.display = "block";
       var step = st.flowStep || "search";
+      if (step === "hotleads") step = "matching"; // retired step — older saved sessions continue straight to the dashboard
       document.getElementById("onboardRoot").innerHTML = (V[step] || V.search)();
       wireFlowForms();
       wireViewActions();
@@ -66,8 +67,14 @@
 
       if (step === "count") runCountAnimation();
       if (step === "matching") {
+        // Straight from posting to the dashboard. The hot-leads concept (AI
+        // screening calls, unlock-by-relevance, trial limits) is explained
+        // in context by the first-time guided tour on the dashboard itself,
+        // instead of on a standalone screen before the employer has landed.
         matchingTimer = setTimeout(function () {
-          S.setFlowStep("hotleads");
+          var draft = S.get().draftJob || {};
+          S.startTrial(window.__draftCompany || draft.company || "Your Company");
+          location.hash = "#/dashboard";
           render();
         }, 1700);
       }
@@ -97,6 +104,19 @@
     renderShellChrome();
     wireViewActions();
     wireRecruiterCallAudios();
+
+    if (route === "dashboard" && !st.tourSeen && window.WI_TOUR && !window.WI_TOUR.isOpen()) {
+      setTimeout(function () { startTour(); }, 350);
+    }
+  }
+
+  function startTour() {
+    window.WI_TOUR.start({
+      onFinish: function (goTo) {
+        S.markTourSeen();
+        if (goTo) location.hash = goTo; else render();
+      }
+    });
   }
 
   function fmtTime(sec) {
@@ -352,6 +372,9 @@
       case "close-profile":
         S.closeCandidateProfile();
         render();
+        break;
+      case "replay-tour":
+        startTour();
         break;
       case "start-trial":
         S.startTrial(window.__draftCompany || "Your Company");
