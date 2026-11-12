@@ -54,7 +54,7 @@
         target: "#trialChip",
         title: "One flat fee, no commission",
         body: "WorkIndia charges a flat monthly fee &mdash; never a cut of the salary you pay. " +
-          "Tap this anytime to see how the trial works.",
+          "Tap <b>How trial works</b> anytime for a quick recap, or to replay this tour.",
         cta: "Start reviewing candidates",
         goTo: "#/candidates"
       }

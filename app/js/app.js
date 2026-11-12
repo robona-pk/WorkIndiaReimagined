@@ -112,6 +112,7 @@
   }
 
   function startTour() {
+    if (!window.WI_TOUR || window.WI_TOUR.isOpen()) return; // never stack two tours
     window.WI_TOUR.start({
       onFinish: function (goTo) {
         S.markTourSeen();
@@ -767,6 +768,17 @@
 
     // Hover shows the "how trial works" tooltip on desktop; this click
     // toggle covers touch devices, which have no hover state.
+    // "How trial works" and the guided tour explain the same thing, so the
+    // tooltip hands off to the tour, which shows each step on the real
+    // dashboard. The tour's targets live on the dashboard, so go there first.
+    var trialTourBtn = document.getElementById("trialTourBtn");
+    if (trialTourBtn) trialTourBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      document.getElementById("trialChipWrap").classList.remove("tooltip-open");
+      if (trialTourBtn.blur) trialTourBtn.blur();
+      if (currentRoute() !== "dashboard") { location.hash = "#/dashboard"; render(); }
+      setTimeout(startTour, 250);
+    });
     var trialWrap = document.getElementById("trialChipWrap");
     if (trialWrap) {
       trialWrap.addEventListener("click", function (e) {

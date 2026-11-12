@@ -107,6 +107,13 @@ a { color: var(--primary); }
 .trial-chip-wrap.has-tooltip.tooltip-open .trial-tooltip {
   opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto;
 }
+/* invisible bridge over the 10px gap so hover survives moving from chip to tooltip */
+.trial-tooltip::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+.trial-tour-btn {
+  display: block; width: 100%; margin-top: 14px; padding: 9px 12px; border: 0; border-radius: 9px; cursor: pointer;
+  background: var(--primary); color: #fff; font: inherit; font-size: 12.5px; font-weight: 700; text-align: center;
+}
+.trial-tour-btn:hover { filter: brightness(1.08); }
 .trial-tooltip-title { font-size: 13px; font-weight: 800; margin: 0 0 10px; color: var(--ink); }
 .trial-steps { list-style: none; margin: 0; padding: 0; }
 .trial-steps li {
