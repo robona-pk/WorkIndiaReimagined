@@ -608,6 +608,7 @@
                   '<li>Unlock ' + t.unlocks + ' candidate profiles</li>' +
                   '<li>Boost job up to ' + t.boosts + ' times</li>' +
                   '<li>Valid for ' + t.validDays + ' days' + (t.note ? ' &middot; ' + t.note : '') + '</li>' +
+                  (t.bulk ? '<li><b>Bulk WhatsApp invites</b> to matching candidates</li>' : '') +
                 '</ul>' +
               '</div>';
             }).join("") +
@@ -1235,6 +1236,7 @@
     feats.push(tier.unlocks.toLocaleString("en-IN") + " candidate unlocks");
     if (tier.boosts > 0) feats.push(tier.boosts + " job boosts");
     feats.push("Valid " + tier.validDays + " days");
+    if (tier.bulk) feats.push('<b>Bulk WhatsApp invites</b> to matching candidates');
 
     var priceBlock = isTrial
       ? ('<div class="plan-price">' + tier.priceLabel + '</div><div class="plan-price-sub">' + tier.priceSub + '</div>')
@@ -1303,7 +1305,7 @@
       '<div style="flex:1;"><p class="section-title" style="margin-bottom:2px;">' +
         (sent ? 'Bulk invite: ' + sent + ' candidates invited' : fresh + ' more job seekers match this job') + '</p>' +
       '<p class="section-sub" style="margin-bottom:0;">' +
-        (sent ? 'Track who read it and who\'s interested.' : 'They haven\'t applied yet. Invite them all on WhatsApp in one go.') + '</p></div>' +
+        (sent ? 'Track who read it and who\'s interested.' : 'They haven\'t applied yet. Invite them all on WhatsApp in one go' + (S.bulkAccess() ? '.' : ' with Bulk Hiring on the 3-month, 1-year and Multi Hire plans.')) + '</p></div>' +
       '<a href="#/bulk" class="btn ' + (sent ? "ghost" : "primary") + '" style="text-decoration:none;">' + (sent ? "View campaigns" : "Bulk invite") + '</a>' +
     '</div>';
   }
@@ -1403,32 +1405,34 @@
     var L = D.BULK_DAILY_LIMITS;
     var sendingDay = S.bulkSendingDay();
     var started = st.bulkCampaigns.length > 0;
+    var access = S.bulkAccess();
     var cards = L.map(function (limit, i) {
       var dayNum = i + 1;
       var label = dayNum < L.length ? "Day " + dayNum + " limit" : "Day " + dayNum + " &amp; after";
       var isToday = started ? Math.min(L.length, sendingDay) === dayNum : dayNum === 1;
       var isPast = started && sendingDay > dayNum && !(dayNum === L.length);
       var used = isToday ? S.bulkSentToday() : (isPast ? limit : 0);
-      var pill = isToday ? '<span class="pill ' + (limit - used > 0 ? "info" : "warn") + '">' + Math.max(0, limit - used) + ' left</span>'
+      var pill = !access ? '<span class="pill muted">&#128274; Locked</span>' : isToday ? '<span class="pill ' + (limit - used > 0 ? "info" : "warn") + '">' + Math.max(0, limit - used) + ' left</span>'
         : isPast ? '<span class="pill success">Done</span>' : '<span class="pill muted">Not started</span>';
-      return '<div class="bulk-limit' + (isToday ? " today" : "") + '">' +
+      return '<div class="bulk-limit' + (isToday && access ? " today" : "") + '">' +
         '<div class="bulk-limit-top"><span class="bulk-limit-label">' + label + '</span>' + pill + '</div>' +
-        '<div class="bulk-limit-n">' + (isToday ? used + ' / ' : '') + limit + ' <span>messages</span></div>' +
+        '<div class="bulk-limit-n">' + (isToday && access ? used + ' / ' : '') + limit + ' <span>messages</span></div>' +
         '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:' + (isToday || isPast ? Math.min(100, used / limit * 100) : 0) + '%"></div></div>' +
       '</div>';
     }).join("");
 
-    var trialNote = !st.subscribed
-      ? '<div class="bulk-trial-note">&#127873; <b>Trial:</b> ' + D.BULK_TRIAL_TOTAL + ' invites included &middot; <b>' + S.bulkRemaining() + ' left</b>. Plans unlock the full daily ramp below, up to ' + L[L.length - 1] + '/day. <a href="#/billing">See plans &rarr;</a></div>'
+    var trialNote = !access
+      ? '<div class="bulk-trial-note">&#128274; Bulk Hiring is included in the <b>' + D.BULK_PLANS_LABEL + '</b>. ' +
+        (st.subscribed ? 'Your current plan doesn\'t include it. ' : '') + '<a href="#/billing">Compare plans &rarr;</a></div>'
       : '';
 
     return '<div class="card" style="margin-bottom:18px;">' +
       '<div class="batch-head" style="margin-bottom:10px;"><div><p class="section-title" style="margin-bottom:2px;">Daily sending limit</p>' +
       '<p class="section-sub" style="margin-bottom:0;">Ramps up as you send, so candidates aren\'t flooded and our WhatsApp sender rating stays healthy.</p></div>' +
-      (st.subscribed && started ? '<button class="btn ghost bulk-sim-btn" data-action="bulk-next-day" title="Demo only">Simulate: next day &rarr;</button>' : '') +
+      (access && started ? '<button class="btn ghost bulk-sim-btn" data-action="bulk-next-day" title="Demo only">Simulate: next day &rarr;</button>' : '') +
       '</div>' +
       trialNote +
-      '<div class="bulk-limit-grid' + (!st.subscribed ? " locked" : "") + '">' + cards + '</div>' +
+      '<div class="bulk-limit-grid' + (!access ? " locked" : "") + '">' + cards + '</div>' +
     '</div>';
   }
 
@@ -1436,7 +1440,11 @@
     var job = st.job || {};
     var fresh = bulkUninvitedCount();
     var remaining = S.bulkRemaining();
+    var access = S.bulkAccess();
     var campaigns = st.bulkCampaigns.slice().reverse();
+    var cta = access
+      ? '<button class="btn primary bulk-cta" data-action="bulk-start"' + (remaining ? "" : " disabled") + '>+ New bulk invite</button>'
+      : '<a href="#/billing" class="btn primary bulk-cta" style="text-decoration:none;">&#128274; Upgrade to use Bulk Hiring</a>';
 
     var list;
     if (!campaigns.length) {
@@ -1444,7 +1452,10 @@
         '<div class="bulk-empty-icon">&#128172;</div>' +
         '<p class="section-title">No campaigns yet</p>' +
         '<p class="section-sub"><b>' + fresh + ' job seekers</b> near ' + esc(job.city || "you") + ' match your ' + esc(job.title || "job") + ' role and haven\'t applied yet.<br/>Invite them on WhatsApp in one go.</p>' +
-        '<button class="btn primary" data-action="bulk-start"' + (remaining ? "" : " disabled") + '>Invite suggested candidates</button>' +
+        (access
+          ? '<button class="btn primary" data-action="bulk-start"' + (remaining ? "" : " disabled") + '>Invite suggested candidates</button>'
+          : '<a href="#/billing" class="btn primary" style="text-decoration:none;">See plans with Bulk Hiring</a>' +
+            '<p class="hint" style="margin-top:10px;">Included in the ' + D.BULK_PLANS_LABEL + '.</p>') +
       '</div>';
     } else {
       list = campaigns.map(function (camp) {
@@ -1499,7 +1510,7 @@
           '<span>&#10004; Only candidates who opted in to job alerts</span>' +
           '<span>&#10004; Interested candidates are AI-screened before they reach you</span>' +
         '</div></div>' +
-        '<button class="btn primary bulk-cta" data-action="bulk-start"' + (remaining ? "" : " disabled") + '>+ New bulk invite</button>' +
+        cta +
       '</div>' +
       renderBulkLimits(st) +
       '<p class="section-title" style="margin:6px 0 10px;">Campaigns</p>' +
@@ -1559,7 +1570,7 @@
           '<button class="bulk-chip' + (f.verifiedOnly ? " active" : "") + '" data-action="bulk-toggle-verified">&#128274; ID verified only</button></div>' +
       '</div>' +
       '<div class="bulk-selbar">' +
-        '<div><b>' + audience.length + '</b> suggested candidates match &middot; <b>' + selected.length + '</b> selected &middot; <span class="' + (remaining - selected.length <= 0 ? "bulk-warn" : "") + '">' + Math.max(0, remaining - selected.length) + ' invites left ' + (st.subscribed ? "today" : "on trial") + '</span></div>' +
+        '<div><b>' + audience.length + '</b> suggested candidates match &middot; <b>' + selected.length + '</b> selected &middot; <span class="' + (remaining - selected.length <= 0 ? "bulk-warn" : "") + '">' + Math.max(0, remaining - selected.length) + ' invites left today</span></div>' +
         '<div class="row">' +
           (selected.length ? '<button class="btn ghost bulk-small" data-action="bulk-clear-selection">Clear</button>' : '') +
           '<button class="btn ghost bulk-small" data-action="bulk-select-top"' + (topN ? "" : " disabled") + '>Select top ' + topN + ' by match</button>' +
@@ -1627,8 +1638,8 @@
         reviewRow("Recipients", '<b>' + n + ' suggested candidates</b> &middot; ' + near + ' within 5 km &middot; ' + active + ' active in the last 3 days') +
         reviewRow("Message", tpl.label + ' (' + tpl.lang + ')') +
         reviewRow("Sent from", 'WorkIndia Jobs &#9989; verified WhatsApp Business. Your phone number is never shared.') +
-        reviewRow("After sending", (S.bulkRemaining() - n) + ' invites left ' + (st.subscribed ? "today" : "on your trial")) +
-        reviewRow("Cost", st.subscribed ? "Included in your plan" : "Included in your trial") +
+        reviewRow("After sending", (S.bulkRemaining() - n) + ' invites left today') +
+        reviewRow("Cost", "Included in your plan") +
       '</div>' +
       '<div class="notice-box">What happens next: candidates who tap <b>Interested</b> get the AI screening call (availability, pay, location). Those who pass land in your Candidates, ready to shortlist and call. You never get a raw list of numbers to chase.</div>' +
       '<div class="bulk-foot">' +
@@ -1644,6 +1655,7 @@
 
   function renderBulk() {
     var st = S.get();
+    if (!S.bulkAccess()) return renderBulkHome(st);
     if (st.bulkStep === "audience") return renderBulkAudience(st);
     if (st.bulkStep === "message") return renderBulkMessage(st);
     if (st.bulkStep === "review") return renderBulkReview(st);

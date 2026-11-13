@@ -477,7 +477,7 @@
     // ---------------- Bulk Hiring ----------------
     // Daily limit ramps with how many days the account has been sending
     // (day 1 = first day a campaign went out), like Job Hai's 50/100/200/300.
-    // Trial accounts get a flat BULK_TRIAL_TOTAL across the whole trial.
+    // Only plans flagged bulk: true in WI_DATA.PLANS can send at all (see bulkAccess).
     bulkSendingDay: function () {
       var c = state.bulkCampaigns;
       if (!c.length) return 1;
@@ -498,8 +498,16 @@
       return L[Math.min(L.length - 1, Actions.bulkSendingDay() - 1)];
     },
 
+    // True only when the plan actually bought includes Bulk Hiring.
+    bulkAccess: function () {
+      if (!state.subscribed || !state.subscribedTierId) return false;
+      var g = state.subscribedGroup === "multi" ? global.WI_DATA.PLANS.multiHire : global.WI_DATA.PLANS.singleHire;
+      var t = g.tiers.filter(function (x) { return x.id === state.subscribedTierId; })[0];
+      return !!(t && t.bulk);
+    },
+
     bulkRemaining: function () {
-      if (!state.subscribed) return Math.max(0, global.WI_DATA.BULK_TRIAL_TOTAL - Actions.bulkSentTotal());
+      if (!Actions.bulkAccess()) return 0;
       return Math.max(0, Actions.bulkTodayLimit() - Actions.bulkSentToday());
     },
 
@@ -512,6 +520,7 @@
     },
 
     startBulkDraft: function () {
+      if (!Actions.bulkAccess()) return;
       state.bulkStep = "audience";
       state.bulkSelected = [];
       state.bulkViewCampaignId = null;

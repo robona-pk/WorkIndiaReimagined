@@ -411,8 +411,8 @@
           purpose: "Try it out, no commitment"
         },
         { id: "1m", name: "1 Month", perMonth: 2499, payUpfront: 2499, reach: "high", jobsActive: 1, unlocks: 100, boosts: 3, validDays: 30, note: null, purpose: "One urgent, one-off hire" },
-        { id: "3m", name: "3 Months Plan", perMonth: 1666, payUpfront: 4999, reach: "high", jobsActive: 1, unlocks: 300, boosts: 9, validDays: 90, note: "Get 5 extra days", purpose: "Hiring in bulk this quarter" },
-        { id: "12m", name: "1 Year Plan", perMonth: 916, payUpfront: 11000, reach: "high", jobsActive: 1, unlocks: 800, boosts: 24, validDays: 365, note: "Get 7 extra days", popular: true, purpose: "Seasonal or year-round hiring" }
+        { id: "3m", name: "3 Months Plan", perMonth: 1666, payUpfront: 4999, reach: "high", jobsActive: 1, unlocks: 300, boosts: 9, validDays: 90, bulk: true, note: "Get 5 extra days", purpose: "Hiring in bulk this quarter" },
+        { id: "12m", name: "1 Year Plan", perMonth: 916, payUpfront: 11000, reach: "high", jobsActive: 1, unlocks: 800, boosts: 24, validDays: 365, bulk: true, note: "Get 7 extra days", popular: true, purpose: "Seasonal or year-round hiring" }
       ]
     },
     multiHire: {
@@ -420,9 +420,9 @@
       saveBadge: "Save 52%",
       tagline: "Hire for Many Roles together.",
       tiers: [
-        { id: "1m", name: "1 Month Plan", perMonth: 4999, payUpfront: null, reach: "high", jobsActive: 3, unlocks: 400, boosts: 10, validDays: 30, note: null, popular: true, purpose: "A quick hiring sprint, many roles" },
-        { id: "3m", name: "3 Months Plan", perMonth: 3066, payUpfront: 9200, reach: "high", jobsActive: 3, unlocks: 900, boosts: 27, validDays: 90, note: null, purpose: "Hiring in bulk this quarter" },
-        { id: "12m", name: "1 Year Plan", perMonth: 1750, payUpfront: 21000, reach: "high", jobsActive: 3, unlocks: 2400, boosts: 72, validDays: 365, note: null, purpose: "Seasonal or ongoing hiring, all year" }
+        { id: "1m", name: "1 Month Plan", perMonth: 4999, payUpfront: null, reach: "high", jobsActive: 3, unlocks: 400, boosts: 10, validDays: 30, bulk: true, note: null, popular: true, purpose: "A quick hiring sprint, many roles" },
+        { id: "3m", name: "3 Months Plan", perMonth: 3066, payUpfront: 9200, reach: "high", jobsActive: 3, unlocks: 900, boosts: 27, validDays: 90, bulk: true, note: null, purpose: "Hiring in bulk this quarter" },
+        { id: "12m", name: "1 Year Plan", perMonth: 1750, payUpfront: 21000, reach: "high", jobsActive: 3, unlocks: 2400, boosts: 72, validDays: 365, bulk: true, note: null, purpose: "Seasonal or ongoing hiring, all year" }
       ]
     }
   };
@@ -621,14 +621,17 @@
   // Business number, so this isn't about the recruiter's number getting
   // blocked — it protects candidates from being flooded and keeps our
   // sender quality rating with Meta healthy.
+  // Bulk Hiring is a paid-plan feature, and only on the plans built for
+  // volume or longer hiring (tiers flagged bulk: true above): Single Hire
+  // 3-month and 1-year, and every Multi Hire plan. The trial and the
+  // Single Hire 1-month plan (one urgent, one-off hire) don't include it.
   var BULK_DAILY_LIMITS = [50, 100, 200, 300]; // day 1, 2, 3, 4+
-  var BULK_TRIAL_TOTAL = 50;                   // trial accounts: 50 invites in total
 
   global.WI_DATA = {
     SUGGESTED_POOL: buildSuggestedPool(260),
     BULK_TEMPLATES: BULK_TEMPLATES,
     BULK_DAILY_LIMITS: BULK_DAILY_LIMITS,
-    BULK_TRIAL_TOTAL: BULK_TRIAL_TOTAL,
+    BULK_PLANS_LABEL: "3-month and 1-year Single Hire plans, and all Multi Hire plans",
     CANDIDATE_POOL: buildCandidatePool(30),
     BATCH_SIZE: 10,
     TOTAL_ALLOCATION: 30,
