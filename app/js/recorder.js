@@ -53,7 +53,6 @@
 
   var activeStream = null;
   var activeRecorder = null;
-  var chunks = [];
   var lastError = null;
 
   // ---- live speech-to-text, so the post-call "summary" reflects what was
@@ -70,31 +69,37 @@
 
   function startTranscription() {
     transcriptParts = [];
+    abortTranscription();
     if (!SpeechRecognitionCtor) return false;
     recognitionWanted = true;
     try {
-      recognizer = new SpeechRecognitionCtor();
-      recognizer.continuous = true;
-      recognizer.interimResults = false;
-      recognizer.lang = (global.navigator && global.navigator.language) || "en-IN";
-      recognizer.onresult = function (e) {
+      var r = new SpeechRecognitionCtor();
+      r.continuous = true;
+      r.interimResults = false;
+      r.maxAlternatives = 1;
+      r.lang = "en-IN"; // English (India) for now
+      r.onresult = function (e) {
         for (var i = e.resultIndex; i < e.results.length; i++) {
           if (e.results[i].isFinal) {
             var piece = (e.results[i][0].transcript || "").trim();
-            if (piece) transcriptParts.push(piece);
+            if (piece) transcriptParts.push(piece.charAt(0).toUpperCase() + piece.slice(1));
           }
         }
       };
-      // Some browsers auto-stop a continuous session after a few seconds of
-      // silence. If we're still mid-call, just restart it — otherwise a
-      // quiet moment on the call would silently truncate the transcript.
-      recognizer.onend = function () {
-        if (recognitionWanted) {
-          try { recognizer.start(); } catch (e) { /* already running / unsupported mid-call restart */ }
+      // Chrome stops a continuous session after a pause in speech; restart
+      // it while the call is still going so nothing said later is lost.
+      r.onend = function () {
+        if (recognitionWanted && recognizer === r) {
+          try { r.start(); } catch (e) { /* ignore */ }
+        } else if (r._onFinalEnd) {
+          r._onFinalEnd();
         }
       };
-      recognizer.onerror = function () { /* e.g. "no-speech" — not fatal, onend will decide whether to restart */ };
-      recognizer.start();
+      r.onerror = function (e) {
+        if (e && (e.error === "not-allowed" || e.error === "service-not-allowed")) recognitionWanted = false;
+      };
+      recognizer = r;
+      r.start();
       return true;
     } catch (e) {
       recognizer = null;
@@ -102,15 +107,30 @@
     }
   }
 
-  // Stops recognition and returns whatever was actually transcribed (may be
-  // an empty string if nothing was understood, or recognition never started).
+  // Stops recognition and resolves with everything that was said. Waits for
+  // the browser to deliver the last sentence (or 2.5s at most).
   function stopTranscription() {
     recognitionWanted = false;
-    if (recognizer) {
-      try { recognizer.stop(); } catch (e) { /* ignore */ }
-    }
+    var r = recognizer;
     recognizer = null;
-    return transcriptParts.join(" ").trim();
+    if (!r) return Promise.resolve(joinParts());
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish() { if (done) return; done = true; resolve(joinParts()); }
+      r._onFinalEnd = finish;
+      try { r.stop(); } catch (e) { finish(); }
+      setTimeout(finish, 2500);
+    });
+  }
+
+  function abortTranscription() {
+    recognitionWanted = false;
+    if (recognizer) { try { recognizer.abort(); } catch (e) { /* ignore */ } }
+    recognizer = null;
+  }
+
+  function joinParts() {
+    return transcriptParts.map(function (p) { return /[.?!]$/.test(p) ? p : p + "."; }).join(" ").trim();
   }
 
   function pickMimeType() {
@@ -127,66 +147,84 @@
   // callers should treat false as "no recording will exist for this call."
   function startCapture() {
     lastError = null;
-    chunks = [];
     if (!global.navigator || !global.navigator.mediaDevices || !global.navigator.mediaDevices.getUserMedia || !global.MediaRecorder) {
       lastError = "unsupported";
       return Promise.resolve(false);
     }
-    return global.navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-      activeStream = stream;
+    // A previous capture that was never stopped would hold the mic; release it.
+    discardCapture();
+    return global.navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 }
+    }).then(function (stream) {
       var mimeType = pickMimeType();
+      var rec;
       try {
-        activeRecorder = mimeType ? new global.MediaRecorder(stream, { mimeType: mimeType }) : new global.MediaRecorder(stream);
+        rec = mimeType ? new global.MediaRecorder(stream, { mimeType: mimeType }) : new global.MediaRecorder(stream);
       } catch (e) {
-        activeRecorder = new global.MediaRecorder(stream);
+        rec = new global.MediaRecorder(stream);
       }
-      activeRecorder.ondataavailable = function (e) {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
+      // Each call keeps its own chunk list, so a later call (or closing the
+      // call window) can never wipe this call's audio before it is saved.
+      rec._chunks = [];
+      rec._stream = stream;
+      rec.ondataavailable = function (e) {
+        if (e.data && e.data.size > 0) rec._chunks.push(e.data);
       };
-      activeRecorder.start();
+      // Emit a chunk every second, so audio is never lost if the tab is
+      // closed or the browser stops the recorder unexpectedly.
+      rec.start(1000);
+      activeRecorder = rec;
+      activeStream = stream;
       return true;
     }).catch(function (err) {
       lastError = (err && err.name) || "denied";
-      cleanupStream();
       return false;
     });
+  }
+
+  function releaseStream(stream) {
+    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
   }
 
   // Stops capture (if running) and saves the result for candidateId.
   // Resolves the Blob on success, or null if there's nothing to save.
   function stopCapture(candidateId) {
-    if (!activeRecorder || activeRecorder.state === "inactive") {
-      cleanupStream();
-      return Promise.resolve(null);
-    }
-    var recorder = activeRecorder;
+    var rec = activeRecorder;
+    // Detach right away: nothing after this point (closing the call window,
+    // starting another call) can touch this recording.
+    activeRecorder = null;
+    activeStream = null;
+    if (!rec) return Promise.resolve(null);
     return new Promise(function (resolve) {
-      recorder.onstop = function () {
-        var blob = chunks.length ? new Blob(chunks, { type: recorder.mimeType || "audio/webm" }) : null;
-        cleanupStream();
+      var finished = false;
+      function finish() {
+        if (finished) return;
+        finished = true;
+        releaseStream(rec._stream);
+        var blob = rec._chunks.length ? new Blob(rec._chunks, { type: rec.mimeType || "audio/webm" }) : null;
         if (!blob || blob.size < 400) { resolve(null); return; }
         saveRecording(candidateId, blob).then(function () { resolve(blob); }).catch(function () { resolve(null); });
-      };
-      try { recorder.stop(); } catch (e) { cleanupStream(); resolve(null); }
+      }
+      rec.onstop = finish;
+      if (rec.state === "inactive") { finish(); return; }
+      try { rec.stop(); } catch (e) { finish(); }
+      setTimeout(finish, 3000); // safety net if onstop never fires
     });
   }
 
-  // Abandons any in-progress capture without saving (e.g. call window closed).
+  // Abandons any in-progress capture without saving (e.g. call cancelled
+  // before it connected).
   function discardCapture() {
-    if (activeRecorder && activeRecorder.state !== "inactive") {
-      try { activeRecorder.stop(); } catch (e) { /* ignore */ }
-    }
-    cleanupStream();
-    stopTranscription(); // abandoned call — discard whatever was transcribed so far too
-  }
-
-  function cleanupStream() {
-    if (activeStream) {
-      activeStream.getTracks().forEach(function (t) { t.stop(); });
-    }
-    activeStream = null;
+    var rec = activeRecorder;
     activeRecorder = null;
-    chunks = [];
+    activeStream = null;
+    if (rec) {
+      rec.ondataavailable = null;
+      rec.onstop = null;
+      if (rec.state !== "inactive") { try { rec.stop(); } catch (e) { /* ignore */ } }
+      releaseStream(rec._stream);
+    }
+    abortTranscription();
   }
 
   function getLastError() { return lastError; }

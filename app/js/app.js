@@ -165,7 +165,7 @@
       };
       audio.ontimeupdate = function () {
         var lbl = document.getElementById("rcallTime-" + id);
-        if (lbl) lbl.textContent = fmtTime(audio.currentTime) + " / " + fmtTime(audio.duration);
+        if (lbl) { var total = isFinite(audio.duration) ? audio.duration : ((S.get().callDurations || {})[id] || 0); lbl.textContent = fmtTime(audio.currentTime) + " / " + fmtTime(total); }
       };
     });
   }
@@ -547,6 +547,9 @@
       if (s2.callOverlayFor !== id) return;
       s2.callPhase = "connected";
       S.connectCall(id);
+      // Live English (India) speech-to-text while the call is connected;
+      // the saved recording is the fallback source for the transcript.
+      if (window.WI_RECORDER && window.WI_RECORDER.startTranscription) window.WI_RECORDER.startTranscription();
       render();
       callTimerInterval = setInterval(function () {
         var s3 = S.get();
@@ -576,11 +579,20 @@
     st.callPhase = "shortlist";
     render();
     if (id && window.WI_RECORDER) {
-      window.WI_RECORDER.stopCapture(id).then(function (blob) {
+      var liveText = window.WI_RECORDER.stopTranscription ? window.WI_RECORDER.stopTranscription() : Promise.resolve("");
+      Promise.all([window.WI_RECORDER.stopCapture(id), liveText]).then(function (res) {
+        var blob = res[0], text = res[1] || "";
         S.markLiveRecording(id, !!blob);
         delete rcallObjectUrls[id]; // force a fresh fetch so the just-saved recording picks up
-        if (blob) transcribeCall(id);
-        else S.setTranscriptStatus(id, "none");
+        if (text) {
+          // What the browser heard live, word for word, during this call.
+          S.setCallTranscript(id, text);
+          S.setTranscriptStatus(id, "done");
+        } else if (blob) {
+          transcribeCall(id); // no live captions (e.g. Safari/Firefox): transcribe the saved recording
+        } else {
+          S.setTranscriptStatus(id, "none");
+        }
         rerenderIfListing();
       });
     }
