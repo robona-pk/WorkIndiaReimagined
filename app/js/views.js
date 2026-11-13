@@ -340,7 +340,7 @@
       '</div>';
     }).join("");
 
-    var langBadge = isReal ? '<span class="lang-badge">&#127908; ' + c.audioLang.toUpperCase() + ' &middot; real audio sample</span>' : "";
+    var langBadge = isReal ? '<span class="lang-badge">&#127908; AI screening call &middot; English</span>' : "";
 
     return (
       '<div class="call-rec" data-cand="' + c.id + '">' +

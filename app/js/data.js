@@ -45,6 +45,113 @@
     "cand-3": { name: "Altaf Raza", role: "Security Guard", city: "Delhi NCR", lang: "English" }
   };
 
+  // One AI screening call, used on every candidate card: the same English
+  // recording covers every screening question (availability, location,
+  // relocation, expected salary, skills, past work).
+  var SCREENING_CALL = {
+    "lang": "en",
+    "file": "audio/screening-call-en.mp3",
+    "duration": 62.8,
+    "lines": [
+      {
+        "who": "ai",
+        "t": "Hello, this is the WorkIndia hiring assistant. I'm calling about the job you applied for. Is this a good time to talk for two minutes?",
+        "start": 0.0,
+        "end": 8.12
+      },
+      {
+        "who": "candidate",
+        "t": "Yes, sure. Please go ahead.",
+        "start": 8.57,
+        "end": 10.36
+      },
+      {
+        "who": "ai",
+        "t": "Great. When would you be available to start?",
+        "start": 10.81,
+        "end": 12.95
+      },
+      {
+        "who": "candidate",
+        "t": "I can join from next Monday.",
+        "start": 13.4,
+        "end": 15.26
+      },
+      {
+        "who": "ai",
+        "t": "Where are you currently based?",
+        "start": 15.71,
+        "end": 17.06
+      },
+      {
+        "who": "candidate",
+        "t": "I live in Koramangala, in Bengaluru.",
+        "start": 17.51,
+        "end": 20.45
+      },
+      {
+        "who": "ai",
+        "t": "The job may be in a different part of the city. Are you okay to relocate, or travel, if needed?",
+        "start": 20.9,
+        "end": 26.52
+      },
+      {
+        "who": "candidate",
+        "t": "Yes, I'm okay to relocate anywhere within Bengaluru.",
+        "start": 26.97,
+        "end": 30.82
+      },
+      {
+        "who": "ai",
+        "t": "What monthly salary are you expecting?",
+        "start": 31.27,
+        "end": 33.16
+      },
+      {
+        "who": "candidate",
+        "t": "Around eighteen thousand rupees a month.",
+        "start": 33.61,
+        "end": 36.31
+      },
+      {
+        "who": "ai",
+        "t": "What skills do you have for this kind of work?",
+        "start": 36.76,
+        "end": 38.81
+      },
+      {
+        "who": "candidate",
+        "t": "I'm good with customers, I can use a smartphone easily, and I have a two-wheeler licence.",
+        "start": 39.26,
+        "end": 44.95
+      },
+      {
+        "who": "ai",
+        "t": "And where have you worked before?",
+        "start": 45.4,
+        "end": 46.71
+      },
+      {
+        "who": "candidate",
+        "t": "I worked at a restaurant in Indiranagar for two years. Before that, I worked at a supermarket for one year.",
+        "start": 47.16,
+        "end": 54.18
+      },
+      {
+        "who": "ai",
+        "t": "Thank you. I'll share your details with the employer, and they'll contact you if you're shortlisted. Have a good day.",
+        "start": 54.63,
+        "end": 60.62
+      },
+      {
+        "who": "candidate",
+        "t": "Thank you. You too.",
+        "start": 61.07,
+        "end": 62.35
+      }
+    ]
+  };
+
   var CALL_AUDIO = {
     "cand-1": {
       "lang": "hi",
@@ -249,8 +356,8 @@
       ];
 
       var id = "cand-" + (i + 1);
-      var override = AUDIO_OVERRIDES[id];
-      var audio = CALL_AUDIO[id];
+      var override = null;
+      var audio = SCREENING_CALL;
 
       pool.push({
         id: id,
