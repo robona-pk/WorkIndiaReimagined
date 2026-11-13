@@ -72,7 +72,15 @@
         gender: "any",           // "any" | "Male" | "Female"
         english: "any"           // "any" | "Basic English" | "Fluent English"
       },
-      candRailOpen: { distance: true, activeIn: true, experience: false, gender: false, english: false }
+      candRailOpen: { distance: true, activeIn: true, experience: false, gender: false, english: false },
+      // ---- Bulk Hiring (WhatsApp invites to suggested candidates) ----
+      bulkCampaigns: [],         // [{ id, jobTitle, templateId, recipientIds, sentAt, day }]
+      bulkStep: null,            // null (campaign list) | "audience" | "message" | "review"
+      bulkSelected: [],          // suggested-candidate ids picked for the current draft
+      bulkFilters: { distance: "10", activeIn: "15", verifiedOnly: false, gender: "any" },
+      bulkTemplateId: "job_invite_hinglish",
+      bulkViewCampaignId: null,  // campaign whose detail panel is open
+      bulkDay: 1                 // simulated calendar day for bulk sending (separate from the trial's day counter)
     };
   }
 
@@ -87,6 +95,7 @@
       // so merge these two nested objects explicitly.
       merged.candidateFilters = Object.assign(defaultState().candidateFilters, parsed.candidateFilters || {});
       merged.candRailOpen = Object.assign(defaultState().candRailOpen, parsed.candRailOpen || {});
+      merged.bulkFilters = Object.assign(defaultState().bulkFilters, parsed.bulkFilters || {});
       // A call can't still be in progress after a reload — don't reopen its overlay.
       merged.callOverlayFor = null;
       merged.callPhase = null;
@@ -462,6 +471,122 @@
 
     toggleCandRailGroup: function (key) {
       state.candRailOpen[key] = !state.candRailOpen[key];
+      save(state);
+    },
+
+    // ---------------- Bulk Hiring ----------------
+    // Daily limit ramps with how many days the account has been sending
+    // (day 1 = first day a campaign went out), like Job Hai's 50/100/200/300.
+    // Trial accounts get a flat BULK_TRIAL_TOTAL across the whole trial.
+    bulkSendingDay: function () {
+      var c = state.bulkCampaigns;
+      if (!c.length) return 1;
+      return Math.max(1, state.bulkDay - c[0].day + 1);
+    },
+
+    bulkSentToday: function () {
+      return state.bulkCampaigns.filter(function (c) { return c.day === state.bulkDay; })
+        .reduce(function (n, c) { return n + c.recipientIds.length; }, 0);
+    },
+
+    bulkSentTotal: function () {
+      return state.bulkCampaigns.reduce(function (n, c) { return n + c.recipientIds.length; }, 0);
+    },
+
+    bulkTodayLimit: function () {
+      var L = global.WI_DATA.BULK_DAILY_LIMITS;
+      return L[Math.min(L.length - 1, Actions.bulkSendingDay() - 1)];
+    },
+
+    bulkRemaining: function () {
+      if (!state.subscribed) return Math.max(0, global.WI_DATA.BULK_TRIAL_TOTAL - Actions.bulkSentTotal());
+      return Math.max(0, Actions.bulkTodayLimit() - Actions.bulkSentToday());
+    },
+
+    // Everyone already invited to this job is excluded from new drafts —
+    // a candidate never gets the same job invite twice.
+    bulkInvitedIds: function () {
+      var seen = {};
+      state.bulkCampaigns.forEach(function (c) { c.recipientIds.forEach(function (id) { seen[id] = true; }); });
+      return seen;
+    },
+
+    startBulkDraft: function () {
+      state.bulkStep = "audience";
+      state.bulkSelected = [];
+      state.bulkViewCampaignId = null;
+      save(state);
+    },
+
+    setBulkStep: function (step) {
+      state.bulkStep = step || null;
+      save(state);
+    },
+
+    cancelBulkDraft: function () {
+      state.bulkStep = null;
+      state.bulkSelected = [];
+      save(state);
+    },
+
+    setBulkFilter: function (key, value) {
+      state.bulkFilters[key] = value;
+      save(state);
+    },
+
+    toggleBulkVerified: function () {
+      state.bulkFilters.verifiedOnly = !state.bulkFilters.verifiedOnly;
+      save(state);
+    },
+
+    toggleBulkCandidate: function (id) {
+      var i = state.bulkSelected.indexOf(id);
+      if (i !== -1) { state.bulkSelected.splice(i, 1); save(state); return true; }
+      if (state.bulkSelected.length >= Actions.bulkRemaining()) return false;
+      state.bulkSelected.push(id);
+      save(state);
+      return true;
+    },
+
+    setBulkSelection: function (ids) {
+      state.bulkSelected = ids.slice(0, Actions.bulkRemaining());
+      save(state);
+    },
+
+    setBulkTemplate: function (id) {
+      state.bulkTemplateId = id;
+      save(state);
+    },
+
+    sendBulkCampaign: function () {
+      var n = Math.min(state.bulkSelected.length, Actions.bulkRemaining());
+      if (!n) return null;
+      var c = {
+        id: "camp-" + (state.bulkCampaigns.length + 1),
+        jobTitle: state.job ? state.job.title : "Your job",
+        templateId: state.bulkTemplateId,
+        recipientIds: state.bulkSelected.slice(0, n),
+        sentAt: new Date().toISOString(),
+        day: state.bulkDay
+      };
+      state.bulkCampaigns.push(c);
+      state.bulkStep = null;
+      state.bulkSelected = [];
+      state.bulkViewCampaignId = c.id;
+      pushUpdate("Your WhatsApp invite for " + c.jobTitle + " went out to " + n + " suggested candidates. Anyone who taps Interested gets the AI screening call first — those who pass show up in your Candidates.");
+      save(state);
+      return c;
+    },
+
+    viewBulkCampaign: function (id) {
+      state.bulkViewCampaignId = (state.bulkViewCampaignId === id) ? null : id;
+      save(state);
+    },
+
+    // Demo-only: sending runs on a simulated clock (st.bulkDay), so let the
+    // presenter roll to the next day to show the limit ramping up.
+    bulkNextDay: function () {
+      state.bulkDay = state.bulkDay + 1;
       save(state);
     },
 

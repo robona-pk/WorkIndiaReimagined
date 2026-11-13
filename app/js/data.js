@@ -552,7 +552,83 @@
     }
   ];
 
+  // ---------------- Bulk Hiring: suggested candidate userbase ----------------
+  // Job seekers on WorkIndia who match the posted job's role/area but have
+  // NOT applied to it yet. Only people who opted in to WhatsApp job alerts
+  // are ever suggested — that opt-in is what makes a bulk invite legitimate
+  // rather than spam. Each one carries a deterministic "response profile"
+  // so a sent campaign plays out the same way on every reload.
+  var MORE_FIRST = ["Rohit", "Sunil", "Anil", "Ravi", "Arjun", "Pooja", "Sneha", "Kavita", "Nikhil", "Amit",
+    "Sachin", "Ajay", "Priya", "Rekha", "Javed", "Sameer", "Lakshmi", "Neha", "Rahul", "Farhan"];
+
+  function buildSuggestedPool(count) {
+    var rnd = seededRandom(1717);
+    var names = FIRST_NAMES.concat(MORE_FIRST);
+    var pool = [];
+    for (var i = 0; i < count; i++) {
+      var lastActive = rnd() < 0.55 ? Math.floor(rnd() * 4) : 4 + Math.floor(rnd() * 40);
+      var dist = Number((0.5 + rnd() * 14).toFixed(1));
+      var exp = Math.floor(rnd() * 7);
+      // Match score: closer + more recently active + some experience = higher.
+      var match = Math.round(Math.max(52, Math.min(98,
+        96 - dist * 2.2 - Math.min(lastActive, 30) * 0.6 + Math.min(exp, 4) * 1.5 + (rnd() * 8 - 4))));
+      var r1 = rnd(), r2 = rnd(), r3 = rnd();
+      // Likelihood of opening / tapping "Interested" scales with recency + match.
+      var readProb = lastActive <= 3 ? 0.82 : lastActive <= 15 ? 0.6 : 0.35;
+      var intProb = (match / 100) * (lastActive <= 3 ? 0.16 : lastActive <= 15 ? 0.09 : 0.04);
+      pool.push({
+        id: "sug-" + (i + 1),
+        name: pick(names, rnd) + " " + pick(LAST_INITIALS, rnd) + ".",
+        area: pick(AREAS, rnd),
+        distanceKm: dist,
+        experienceYears: exp,
+        gender: rnd() < 0.74 ? "Male" : "Female",
+        verified: rnd() < 0.55,
+        lastActiveDaysAgo: lastActive,
+        skills: [pick(SKILLS_POOL, rnd), pick(SKILLS_POOL, rnd)],
+        payExpectation: 12000 + Math.floor(rnd() * 8) * 1000,
+        matchScore: match,
+        // Response simulation (seconds after send) — demo pacing, not real-world timing.
+        delivered: r1 < 0.96,
+        readAfter: r2 < readProb ? 3 + Math.floor(rnd() * 22) : null,
+        interestedAfter: r3 < intProb ? 8 + Math.floor(rnd() * 30) : null,
+        passesScreen: rnd() < 0.7
+      });
+    }
+    pool.sort(function (a, b) { return b.matchScore - a.matchScore; });
+    return pool;
+  }
+
+  // WhatsApp-approved templates (Meta requires pre-approved templates for
+  // business-initiated messages). {{vars}} are filled per candidate.
+  var BULK_TEMPLATES = [
+    {
+      id: "job_invite_hinglish", label: "Job invite", lang: "Hinglish",
+      body: "Namaste {{name}} 🙏\n{{company}} ko {{job}} ki zaroorat hai — {{area}} ke paas.\n💰 ₹{{salaryMin}}–₹{{salaryMax}}/month\n📍 Aapke ghar se ~{{distance}} km\n\nInterested hain toh neeche button dabaiye. Koi fees nahi.",
+    },
+    {
+      id: "job_invite_en", label: "Job invite", lang: "English",
+      body: "Hi {{name}} 👋\n{{company}} is hiring a {{job}} near {{area}}.\n💰 ₹{{salaryMin}}–₹{{salaryMax}}/month\n📍 ~{{distance}} km from you\n\nTap Interested to apply — it's free.",
+    },
+    {
+      id: "urgent_hindi", label: "Urgent joining", lang: "Hindi",
+      body: "नमस्ते {{name}} 🙏\n{{company}} को तुरंत {{job}} चाहिए — {{area}} के पास।\n💰 ₹{{salaryMin}}–₹{{salaryMax}}/महीना\nइसी हफ़्ते जॉइनिंग।\n\nरुचि है तो नीचे बटन दबाएँ। कोई फ़ीस नहीं।",
+    }
+  ];
+
+  // Ramp-up sending limits, mirroring the industry pattern (Job Hai uses
+  // 50 / 100 / 200 / 300). Messages go from WorkIndia's verified WhatsApp
+  // Business number, so this isn't about the recruiter's number getting
+  // blocked — it protects candidates from being flooded and keeps our
+  // sender quality rating with Meta healthy.
+  var BULK_DAILY_LIMITS = [50, 100, 200, 300]; // day 1, 2, 3, 4+
+  var BULK_TRIAL_TOTAL = 50;                   // trial accounts: 50 invites in total
+
   global.WI_DATA = {
+    SUGGESTED_POOL: buildSuggestedPool(260),
+    BULK_TEMPLATES: BULK_TEMPLATES,
+    BULK_DAILY_LIMITS: BULK_DAILY_LIMITS,
+    BULK_TRIAL_TOTAL: BULK_TRIAL_TOTAL,
     CANDIDATE_POOL: buildCandidatePool(30),
     BATCH_SIZE: 10,
     TOTAL_ALLOCATION: 30,

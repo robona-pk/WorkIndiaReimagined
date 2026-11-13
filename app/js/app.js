@@ -18,6 +18,7 @@
     calls: "Calls",
     billing: "Trial & Billing",
     updates: "Updates",
+    bulk: "Bulk Hiring",
     settings: "Settings"
   };
 
@@ -89,7 +90,7 @@
     document.querySelectorAll(".sb-link").forEach(function (a) {
       a.classList.toggle("active", a.getAttribute("data-route") === route);
     });
-    document.getElementById("viewRoot").classList.toggle("view-wide", route === "billing" || route === "candidates");
+    document.getElementById("viewRoot").classList.toggle("view-wide", route === "billing" || route === "candidates" || route === "bulk");
     var sidebarEl = document.getElementById("sidebar");
     if (sidebarEl) sidebarEl.classList.toggle("collapsed", !!st.sidebarCollapsed);
     var toggleBtn = document.getElementById("sbToggleBtn");
@@ -493,6 +494,65 @@
         S.toggleCandRailGroup(el.getAttribute("data-key"));
         render();
         break;
+      case "bulk-start":
+        S.startBulkDraft();
+        render(); window.scrollTo(0, 0);
+        break;
+      case "bulk-cancel":
+        S.cancelBulkDraft();
+        render();
+        break;
+      case "bulk-goto":
+        S.setBulkStep(id);
+        render(); window.scrollTo(0, 0);
+        break;
+      case "bulk-set-filter":
+        S.setBulkFilter(el.getAttribute("data-key"), el.getAttribute("data-value"));
+        render();
+        break;
+      case "bulk-toggle-verified":
+        S.toggleBulkVerified();
+        render();
+        break;
+      case "bulk-toggle-cand":
+        S.toggleBulkCandidate(id);
+        render();
+        break;
+      case "bulk-select-top":
+        var stB = S.get();
+        var invited = S.bulkInvitedIds();
+        var fb = stB.bulkFilters;
+        var ids = window.WI_DATA.SUGGESTED_POOL.filter(function (c) {
+          if (invited[c.id]) return false;
+          if (fb.distance !== "any" && c.distanceKm > Number(fb.distance)) return false;
+          if (fb.activeIn !== "any" && c.lastActiveDaysAgo > Number(fb.activeIn)) return false;
+          if (fb.verifiedOnly && !c.verified) return false;
+          if (fb.gender !== "any" && c.gender !== fb.gender) return false;
+          return true;
+        }).map(function (c) { return c.id; });
+        S.setBulkSelection(ids);
+        render();
+        break;
+      case "bulk-clear-selection":
+        S.setBulkSelection([]);
+        render();
+        break;
+      case "bulk-set-template":
+        S.setBulkTemplate(id);
+        render();
+        break;
+      case "bulk-send":
+        S.sendBulkCampaign();
+        render(); window.scrollTo(0, 0);
+        break;
+      case "bulk-view-campaign":
+        S.viewBulkCampaign(id);
+        render();
+        break;
+      case "bulk-next-day":
+        S.bulkNextDay();
+        render();
+        break;
       case "clear-cand-filters":
         S.clearCandidateFilters();
         render();
@@ -762,6 +822,17 @@
       window.history.replaceState(null, "", location.pathname + location.hash);
     }
   }
+
+  // While a just-sent bulk campaign is still "playing out" (first minute),
+  // refresh the campaign list so delivered/read/interested counts tick up.
+  // Only on the campaign list, never mid-wizard, so selections aren't disturbed.
+  setInterval(function () {
+    var st = S.get();
+    if (!st.onboarded || currentRoute() !== "bulk" || st.bulkStep || st.callOverlayFor) return;
+    if (window.WI_BULK_LIVE && window.WI_BULK_LIVE()) {
+      var y = window.scrollY; render(); window.scrollTo(0, y);
+    }
+  }, 2000);
 
   window.addEventListener("hashchange", render);
   window.addEventListener("DOMContentLoaded", function () {

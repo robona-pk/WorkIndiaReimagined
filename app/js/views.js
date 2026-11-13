@@ -306,6 +306,7 @@
           '</div>' +
         '</div>' +
 
+        renderBulkNudge(st) +
         '<div class="card">' +
           '<p class="section-title">What\'s happened so far</p>' +
           timelineItem("Job posted &amp; live", true) +
@@ -420,6 +421,7 @@
             '<div><p class="section-title" style="margin-bottom:2px;">' + batchLabel + '</p><p class="section-sub" style="margin-bottom:0;">AI pre-screened by voice before you see them &mdash; shortlist a candidate to unlock their number and call them.</p></div>' +
             '<span class="pill muted">' + st.cursorInBatch + '/10 reviewed this batch</span>' +
           '</div>' +
+          '<a class="bulk-inline-link" href="#/bulk">&#128172; Want more applicants? Invite matching job seekers on WhatsApp in bulk &rarr;</a>' +
           '<div class="trial-shortlist-note">You can shortlist up to <b>' + D.SHORTLIST_TARGET + ' candidates</b> on this trial &middot; ' + st.shortlistedIds.length + '/' + D.SHORTLIST_TARGET + ' used</div>' +
           (emptyState || '<div class="cand-grid">' + cards + '</div>') +
         '</div>' +
@@ -1293,6 +1295,361 @@
     );
   }
 
+  function renderBulkNudge(st) {
+    var fresh = bulkUninvitedCount();
+    var sent = S.bulkSentTotal();
+    return '<div class="card bulk-nudge" style="margin-bottom:18px;">' +
+      '<div class="bulk-nudge-icon">&#128172;</div>' +
+      '<div style="flex:1;"><p class="section-title" style="margin-bottom:2px;">' +
+        (sent ? 'Bulk invite: ' + sent + ' candidates invited' : fresh + ' more job seekers match this job') + '</p>' +
+      '<p class="section-sub" style="margin-bottom:0;">' +
+        (sent ? 'Track who read it and who\'s interested.' : 'They haven\'t applied yet. Invite them all on WhatsApp in one go.') + '</p></div>' +
+      '<a href="#/bulk" class="btn ' + (sent ? "ghost" : "primary") + '" style="text-decoration:none;">' + (sent ? "View campaigns" : "Bulk invite") + '</a>' +
+    '</div>';
+  }
+
+  // ---------------- Bulk Hiring ----------------
+  // Recruiters invite *suggested* candidates — job seekers on WorkIndia who
+  // match the posted job but haven't applied — over WhatsApp, in bulk.
+  // Benchmarked against Job Hai's "Bulk WhatsApp" (day-wise ramp 50/100/200/300,
+  // campaigns list), with three deliberate differences:
+  //   1. Sent from WorkIndia's verified WhatsApp Business number, so there's
+  //      no Chrome extension to install and the recruiter's number never
+  //      gets blocked or exposed.
+  //   2. The audience comes from WorkIndia's own matched userbase (opted in
+  //      to job alerts), not a contact list the recruiter has to bring.
+  //   3. "Interested" isn't a raw lead dump: the AI screening call runs first,
+  //      same as every other candidate in this redesign.
+  var bulkPoolById = null;
+  function bulkById() {
+    if (!bulkPoolById) { bulkPoolById = {}; D.SUGGESTED_POOL.forEach(function (c) { bulkPoolById[c.id] = c; }); }
+    return bulkPoolById;
+  }
+
+  function bulkMatchesFilters(c, f) {
+    if (f.distance !== "any" && c.distanceKm > Number(f.distance)) return false;
+    if (f.activeIn !== "any" && c.lastActiveDaysAgo > Number(f.activeIn)) return false;
+    if (f.verifiedOnly && !c.verified) return false;
+    if (f.gender !== "any" && c.gender !== f.gender) return false;
+    return true;
+  }
+
+  function bulkAudience(st) {
+    var invited = S.bulkInvitedIds();
+    return D.SUGGESTED_POOL.filter(function (c) { return !invited[c.id] && bulkMatchesFilters(c, st.bulkFilters); });
+  }
+
+  function bulkUninvitedCount() {
+    var invited = S.bulkInvitedIds();
+    return D.SUGGESTED_POOL.filter(function (c) { return !invited[c.id]; }).length;
+  }
+
+  // Per-recipient status, derived from seconds since the campaign was sent
+  // (deterministic per candidate, so a reload replays the same outcome).
+  function bulkRecipientStatus(c, elapsed) {
+    if (elapsed < 1) return "sending";
+    if (!c.delivered) return "failed";
+    if (c.interestedAfter !== null && elapsed >= c.interestedAfter) {
+      if (elapsed < c.interestedAfter + 10) return "screening";
+      return c.passesScreen ? "passed" : "not_fit";
+    }
+    if (c.readAfter !== null && elapsed >= c.readAfter) return "read";
+    return "delivered";
+  }
+
+  function bulkCampaignStats(camp) {
+    var elapsed = (Date.now() - new Date(camp.sentAt).getTime()) / 1000;
+    var by = bulkById();
+    var s = { sent: camp.recipientIds.length, delivered: 0, read: 0, interested: 0, passed: 0, screening: 0, elapsed: elapsed, rows: [] };
+    camp.recipientIds.forEach(function (id) {
+      var c = by[id]; if (!c) return;
+      var status = bulkRecipientStatus(c, elapsed);
+      if (status !== "sending" && status !== "failed") s.delivered++;
+      if (status === "read" || status === "screening" || status === "passed" || status === "not_fit") s.read++;
+      if (status === "screening" || status === "passed" || status === "not_fit") s.interested++;
+      if (status === "screening") s.screening++;
+      if (status === "passed") s.passed++;
+      s.rows.push({ c: c, status: status });
+    });
+    return s;
+  }
+
+  var BULK_STATUS = {
+    sending: ["Sending", "muted"],
+    failed: ["Not delivered", "muted"],
+    delivered: ["Delivered", "muted"],
+    read: ["Read", "muted"],
+    screening: ["Interested &middot; AI screening", "warn"],
+    passed: ["Passed AI screen", "success"],
+    not_fit: ["Didn't pass screen", "muted"]
+  };
+
+  function fillTemplate(tpl, st, c) {
+    var job = st.job || {};
+    var vars = {
+      name: c ? c.name.split(" ")[0] : "Ramesh",
+      company: job.company || st.company || "Your Company",
+      job: job.title || "Delivery Executive",
+      area: c ? c.area : (job.city || "your area"),
+      salaryMin: Number(job.salaryMin || 14000).toLocaleString("en-IN"),
+      salaryMax: Number(job.salaryMax || 19000).toLocaleString("en-IN"),
+      distance: c ? Math.max(1, Math.round(c.distanceKm)) : 3
+    };
+    return esc(tpl.body).replace(/\{\{(\w+)\}\}/g, function (m, k) { return '<b>' + (vars[k] != null ? vars[k] : m) + '</b>'; })
+      .replace(/\n/g, "<br/>");
+  }
+
+  function renderBulkLimits(st) {
+    var L = D.BULK_DAILY_LIMITS;
+    var sendingDay = S.bulkSendingDay();
+    var started = st.bulkCampaigns.length > 0;
+    var cards = L.map(function (limit, i) {
+      var dayNum = i + 1;
+      var label = dayNum < L.length ? "Day " + dayNum + " limit" : "Day " + dayNum + " &amp; after";
+      var isToday = started ? Math.min(L.length, sendingDay) === dayNum : dayNum === 1;
+      var isPast = started && sendingDay > dayNum && !(dayNum === L.length);
+      var used = isToday ? S.bulkSentToday() : (isPast ? limit : 0);
+      var pill = isToday ? '<span class="pill ' + (limit - used > 0 ? "info" : "warn") + '">' + Math.max(0, limit - used) + ' left</span>'
+        : isPast ? '<span class="pill success">Done</span>' : '<span class="pill muted">Not started</span>';
+      return '<div class="bulk-limit' + (isToday ? " today" : "") + '">' +
+        '<div class="bulk-limit-top"><span class="bulk-limit-label">' + label + '</span>' + pill + '</div>' +
+        '<div class="bulk-limit-n">' + (isToday ? used + ' / ' : '') + limit + ' <span>messages</span></div>' +
+        '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:' + (isToday || isPast ? Math.min(100, used / limit * 100) : 0) + '%"></div></div>' +
+      '</div>';
+    }).join("");
+
+    var trialNote = !st.subscribed
+      ? '<div class="bulk-trial-note">&#127873; <b>Trial:</b> ' + D.BULK_TRIAL_TOTAL + ' invites included &middot; <b>' + S.bulkRemaining() + ' left</b>. Plans unlock the full daily ramp below, up to ' + L[L.length - 1] + '/day. <a href="#/billing">See plans &rarr;</a></div>'
+      : '';
+
+    return '<div class="card" style="margin-bottom:18px;">' +
+      '<div class="batch-head" style="margin-bottom:10px;"><div><p class="section-title" style="margin-bottom:2px;">Daily sending limit</p>' +
+      '<p class="section-sub" style="margin-bottom:0;">Ramps up as you send, so candidates aren\'t flooded and our WhatsApp sender rating stays healthy.</p></div>' +
+      (st.subscribed && started ? '<button class="btn ghost bulk-sim-btn" data-action="bulk-next-day" title="Demo only">Simulate: next day &rarr;</button>' : '') +
+      '</div>' +
+      trialNote +
+      '<div class="bulk-limit-grid' + (!st.subscribed ? " locked" : "") + '">' + cards + '</div>' +
+    '</div>';
+  }
+
+  function renderBulkHome(st) {
+    var job = st.job || {};
+    var fresh = bulkUninvitedCount();
+    var remaining = S.bulkRemaining();
+    var campaigns = st.bulkCampaigns.slice().reverse();
+
+    var list;
+    if (!campaigns.length) {
+      list = '<div class="bulk-empty">' +
+        '<div class="bulk-empty-icon">&#128172;</div>' +
+        '<p class="section-title">No campaigns yet</p>' +
+        '<p class="section-sub"><b>' + fresh + ' job seekers</b> near ' + esc(job.city || "you") + ' match your ' + esc(job.title || "job") + ' role and haven\'t applied yet.<br/>Invite them on WhatsApp in one go.</p>' +
+        '<button class="btn primary" data-action="bulk-start"' + (remaining ? "" : " disabled") + '>Invite suggested candidates</button>' +
+      '</div>';
+    } else {
+      list = campaigns.map(function (camp) {
+        var s = bulkCampaignStats(camp);
+        var tpl = D.BULK_TEMPLATES.filter(function (t) { return t.id === camp.templateId; })[0] || D.BULK_TEMPLATES[0];
+        var open = st.bulkViewCampaignId === camp.id;
+        var when = new Date(camp.sentAt);
+        var detail = "";
+        if (open) {
+          var pct = function (n) { return s.sent ? Math.round(n / s.sent * 100) : 0; };
+          detail = '<div class="bulk-camp-detail">' +
+            '<div class="bulk-funnel">' +
+              bulkFunnelStep("Sent", s.sent, 100) +
+              bulkFunnelStep("Delivered", s.delivered, pct(s.delivered)) +
+              bulkFunnelStep("Read", s.read, pct(s.read)) +
+              bulkFunnelStep("Interested", s.interested, pct(s.interested)) +
+              bulkFunnelStep("Passed AI screen", s.passed, pct(s.passed)) +
+            '</div>' +
+            '<p class="hint" style="margin:10px 0 8px;">Candidates who tap <b>Interested</b> get the AI screening call. Those who pass join your next candidate batch, ready to shortlist and call.</p>' +
+            '<div class="bulk-recip-list">' +
+              s.rows.sort(function (a, b) { return bulkStatusRank(b.status) - bulkStatusRank(a.status); }).map(function (r) {
+                var meta = BULK_STATUS[r.status];
+                return '<div class="bulk-recip">' +
+                  '<span class="bulk-avatar">' + avatarInitials(r.c.name) + '</span>' +
+                  '<span class="bulk-recip-name">' + esc(r.c.name) + '<span class="hint"> &middot; ' + r.c.area + ' &middot; ' + r.c.distanceKm + ' km</span></span>' +
+                  '<span class="pill ' + meta[1] + '">' + meta[0] + '</span>' +
+                '</div>';
+              }).join("") +
+            '</div>' +
+          '</div>';
+        }
+        return '<div class="bulk-camp' + (open ? " open" : "") + '">' +
+          '<button class="bulk-camp-row" data-action="bulk-view-campaign" data-id="' + camp.id + '">' +
+            '<div class="bulk-camp-main"><div class="bulk-camp-title">' + esc(camp.jobTitle) + ' &middot; ' + tpl.label + ' (' + tpl.lang + ')</div>' +
+            '<div class="hint">Sent ' + when.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) + ', ' + when.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }) + ' &middot; ' + s.sent + ' candidates</div></div>' +
+            '<div class="bulk-camp-stats">' +
+              bulkMiniStat(s.read, "read") + bulkMiniStat(s.interested, "interested") + bulkMiniStat(s.passed, "passed screen", true) +
+            '</div>' +
+            '<span class="bulk-chev">' + (open ? "&#9652;" : "&#9662;") + '</span>' +
+          '</button>' +
+          detail +
+        '</div>';
+      }).join("");
+    }
+
+    return '<div>' +
+      '<div class="bulk-hero card">' +
+        '<div><p class="section-title" style="font-size:18px;">Bulk invite on WhatsApp</p>' +
+        '<p class="section-sub" style="margin-bottom:12px;">Reach job seekers who match <b>' + esc(job.title || "your job") + '</b> but haven\'t applied yet. One message, many candidates, and only the interested ones come back to you.</p>' +
+        '<div class="bulk-trust">' +
+          '<span>&#10004; Sent from WorkIndia\'s verified WhatsApp &middot; no extension, your number stays private</span>' +
+          '<span>&#10004; Only candidates who opted in to job alerts</span>' +
+          '<span>&#10004; Interested candidates are AI-screened before they reach you</span>' +
+        '</div></div>' +
+        '<button class="btn primary bulk-cta" data-action="bulk-start"' + (remaining ? "" : " disabled") + '>+ New bulk invite</button>' +
+      '</div>' +
+      renderBulkLimits(st) +
+      '<p class="section-title" style="margin:6px 0 10px;">Campaigns</p>' +
+      list +
+    '</div>';
+  }
+
+  function bulkStatusRank(s) { return { passed: 6, screening: 5, not_fit: 4, read: 3, delivered: 2, sending: 1, failed: 0 }[s] || 0; }
+
+  function bulkFunnelStep(label, n, pct) {
+    return '<div class="bulk-fstep"><div class="bulk-fbar"><div style="height:' + Math.max(4, pct) + '%"></div></div>' +
+      '<div class="bulk-fn">' + n + '</div><div class="hint">' + label + '</div></div>';
+  }
+
+  function bulkMiniStat(n, label, strong) {
+    return '<div class="bulk-mini' + (strong ? " strong" : "") + '"><b>' + n + '</b><span>' + label + '</span></div>';
+  }
+
+  function renderBulkStepper(step) {
+    var steps = [["audience", "Choose candidates"], ["message", "Message"], ["review", "Review &amp; send"]];
+    var idx = steps.map(function (s) { return s[0]; }).indexOf(step);
+    return '<div class="bulk-stepper">' + steps.map(function (s, i) {
+      return '<div class="bulk-step' + (i === idx ? " active" : i < idx ? " done" : "") + '"><span class="bulk-step-n">' + (i < idx ? "&#10003;" : i + 1) + '</span>' + s[1] + '</div>';
+    }).join('<span class="bulk-step-line"></span>') + '</div>';
+  }
+
+  function bulkChip(key, value, label, current) {
+    return '<button class="bulk-chip' + (String(current) === String(value) ? " active" : "") + '" data-action="bulk-set-filter" data-key="' + key + '" data-value="' + value + '">' + label + '</button>';
+  }
+
+  function renderBulkAudience(st) {
+    var f = st.bulkFilters;
+    var audience = bulkAudience(st);
+    var remaining = S.bulkRemaining();
+    var selected = st.bulkSelected;
+    var sel = {}; selected.forEach(function (id) { sel[id] = true; });
+    var topN = Math.min(remaining, audience.length);
+    var SHOW = 60;
+    var rows = audience.slice(0, SHOW).map(function (c) {
+      var on = !!sel[c.id];
+      var blocked = !on && selected.length >= remaining;
+      return '<label class="bulk-row' + (on ? " on" : "") + (blocked ? " blocked" : "") + '" data-action="bulk-toggle-cand" data-id="' + c.id + '">' +
+        '<span class="bulk-check">' + (on ? "&#10003;" : "") + '</span>' +
+        '<span class="bulk-avatar">' + avatarInitials(c.name) + '</span>' +
+        '<span class="bulk-row-main"><span class="bulk-row-name">' + esc(c.name) + (c.verified ? ' <span class="badge-id-verified">&#128274; ID</span>' : '') + '</span>' +
+          '<span class="hint">' + c.area + ' &middot; ' + c.distanceKm + ' km &middot; ' + c.experienceYears + ' yrs exp &middot; ' + c.skills.join(", ") + '</span></span>' +
+        '<span class="bulk-row-side"><span class="bulk-match">' + c.matchScore + '% match</span><span class="hint">' + activeRecencyLabel(c.lastActiveDaysAgo) + '</span></span>' +
+      '</label>';
+    }).join("");
+
+    return '<div class="card bulk-wizard">' +
+      renderBulkStepper("audience") +
+      '<div class="bulk-filters">' +
+        '<div class="bulk-fgroup"><span class="bulk-flabel">Distance</span>' + bulkChip("distance", "5", "&le; 5 km", f.distance) + bulkChip("distance", "10", "&le; 10 km", f.distance) + bulkChip("distance", "15", "&le; 15 km", f.distance) + bulkChip("distance", "any", "Any", f.distance) + '</div>' +
+        '<div class="bulk-fgroup"><span class="bulk-flabel">Active in</span>' + bulkChip("activeIn", "3", "3 days", f.activeIn) + bulkChip("activeIn", "7", "7 days", f.activeIn) + bulkChip("activeIn", "15", "15 days", f.activeIn) + bulkChip("activeIn", "any", "Any", f.activeIn) + '</div>' +
+        '<div class="bulk-fgroup"><span class="bulk-flabel">Gender</span>' + bulkChip("gender", "any", "Any", f.gender) + bulkChip("gender", "Male", "Male", f.gender) + bulkChip("gender", "Female", "Female", f.gender) +
+          '<button class="bulk-chip' + (f.verifiedOnly ? " active" : "") + '" data-action="bulk-toggle-verified">&#128274; ID verified only</button></div>' +
+      '</div>' +
+      '<div class="bulk-selbar">' +
+        '<div><b>' + audience.length + '</b> suggested candidates match &middot; <b>' + selected.length + '</b> selected &middot; <span class="' + (remaining - selected.length <= 0 ? "bulk-warn" : "") + '">' + Math.max(0, remaining - selected.length) + ' invites left ' + (st.subscribed ? "today" : "on trial") + '</span></div>' +
+        '<div class="row">' +
+          (selected.length ? '<button class="btn ghost bulk-small" data-action="bulk-clear-selection">Clear</button>' : '') +
+          '<button class="btn ghost bulk-small" data-action="bulk-select-top"' + (topN ? "" : " disabled") + '>Select top ' + topN + ' by match</button>' +
+        '</div>' +
+      '</div>' +
+      (rows ? '<div class="bulk-list">' + rows + '</div>' +
+        (audience.length > SHOW ? '<p class="hint" style="text-align:center;margin-top:8px;">Showing the top ' + SHOW + ' by match &middot; "Select top" picks from all ' + audience.length + '</p>' : '')
+        : '<div class="locked-banner">No suggested candidates match these filters. Try widening distance or activity.</div>') +
+      '<div class="bulk-foot">' +
+        '<button class="btn ghost" data-action="bulk-cancel">Cancel</button>' +
+        '<button class="btn primary" data-action="bulk-goto" data-id="message"' + (selected.length ? "" : " disabled") + '>Next: message &rarr;</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderBulkMessage(st) {
+    var tpl = D.BULK_TEMPLATES.filter(function (t) { return t.id === st.bulkTemplateId; })[0] || D.BULK_TEMPLATES[0];
+    var first = bulkById()[st.bulkSelected[0]];
+    var opts = D.BULK_TEMPLATES.map(function (t) {
+      var on = t.id === tpl.id;
+      return '<button class="bulk-tpl' + (on ? " active" : "") + '" data-action="bulk-set-template" data-id="' + t.id + '">' +
+        '<span class="bulk-radio">' + (on ? "&#9679;" : "") + '</span>' +
+        '<span><b>' + t.label + '</b> <span class="pill muted">' + t.lang + '</span><br/><span class="hint">WhatsApp-approved template</span></span>' +
+      '</button>';
+    }).join("");
+    return '<div class="card bulk-wizard">' +
+      renderBulkStepper("message") +
+      '<div class="bulk-msg-grid">' +
+        '<div>' +
+          '<p class="section-title">Pick a message</p>' +
+          '<p class="section-sub">Pay, distance and the candidate\'s name are filled in for each person automatically.</p>' +
+          opts +
+          '<div class="notice-box">Business-initiated WhatsApp messages must use pre-approved templates, so free text isn\'t allowed here. Every message has a <b>Not interested</b> button, and candidates can reply STOP to stop job alerts.</div>' +
+        '</div>' +
+        '<div>' +
+          '<p class="hint" style="text-align:center;margin-bottom:8px;">What ' + (first ? esc(first.name.split(" ")[0]) : "the candidate") + ' sees</p>' +
+          '<div class="wa-phone bulk-wa"><div class="wa-screen" style="height:auto;">' +
+            '<div class="wa-head"><div class="wa-avatar">W</div><div class="wa-id"><strong>WorkIndia Jobs &#9989;</strong><span>Verified business</span></div></div>' +
+            '<div class="wa-body" style="min-height:300px;">' +
+              '<div class="wa-bubble">' + fillTemplate(tpl, st, first) + '</div>' +
+              '<div class="bulk-wa-btns"><span>&#9989; Interested</span><span>&#10060; Not interested</span></div>' +
+            '</div>' +
+          '</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bulk-foot">' +
+        '<button class="btn ghost" data-action="bulk-goto" data-id="audience">&larr; Back</button>' +
+        '<button class="btn primary" data-action="bulk-goto" data-id="review">Next: review &rarr;</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderBulkReview(st) {
+    var tpl = D.BULK_TEMPLATES.filter(function (t) { return t.id === st.bulkTemplateId; })[0] || D.BULK_TEMPLATES[0];
+    var n = Math.min(st.bulkSelected.length, S.bulkRemaining());
+    var by = bulkById();
+    var picked = st.bulkSelected.slice(0, n).map(function (id) { return by[id]; }).filter(Boolean);
+    var near = picked.filter(function (c) { return c.distanceKm <= 5; }).length;
+    var active = picked.filter(function (c) { return c.lastActiveDaysAgo <= 3; }).length;
+    var job = st.job || {};
+    return '<div class="card bulk-wizard">' +
+      renderBulkStepper("review") +
+      '<div class="bulk-review">' +
+        reviewRow("Job", esc(job.title || "") + ', ' + esc(job.city || "") + ' &middot; &#8377;' + Number(job.salaryMin || 0).toLocaleString("en-IN") + '&ndash;&#8377;' + Number(job.salaryMax || 0).toLocaleString("en-IN") + '/month') +
+        reviewRow("Recipients", '<b>' + n + ' suggested candidates</b> &middot; ' + near + ' within 5 km &middot; ' + active + ' active in the last 3 days') +
+        reviewRow("Message", tpl.label + ' (' + tpl.lang + ')') +
+        reviewRow("Sent from", 'WorkIndia Jobs &#9989; verified WhatsApp Business. Your phone number is never shared.') +
+        reviewRow("After sending", (S.bulkRemaining() - n) + ' invites left ' + (st.subscribed ? "today" : "on your trial")) +
+        reviewRow("Cost", st.subscribed ? "Included in your plan" : "Included in your trial") +
+      '</div>' +
+      '<div class="notice-box">What happens next: candidates who tap <b>Interested</b> get the AI screening call (availability, pay, location). Those who pass land in your Candidates, ready to shortlist and call. You never get a raw list of numbers to chase.</div>' +
+      '<div class="bulk-foot">' +
+        '<button class="btn ghost" data-action="bulk-goto" data-id="message">&larr; Back</button>' +
+        '<button class="btn success" data-action="bulk-send"' + (n ? "" : " disabled") + '>&#128232; Send to ' + n + ' candidates</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function reviewRow(label, value) {
+    return '<div class="bulk-review-row"><span>' + label + '</span><span>' + value + '</span></div>';
+  }
+
+  function renderBulk() {
+    var st = S.get();
+    if (st.bulkStep === "audience") return renderBulkAudience(st);
+    if (st.bulkStep === "message") return renderBulkMessage(st);
+    if (st.bulkStep === "review") return renderBulkReview(st);
+    return renderBulkHome(st);
+  }
+
   // ---------------- Settings ----------------
   function renderSettings() {
     var st = S.get();
@@ -1306,6 +1663,10 @@
     );
   }
 
+  global.WI_BULK_LIVE = function () {
+    return S.get().bulkCampaigns.some(function (c) { return (Date.now() - new Date(c.sentAt).getTime()) / 1000 < 60; });
+  };
+
   global.WI_VIEWS = {
     search: renderJobSearch,
     count: renderCandidateCount,
@@ -1317,6 +1678,7 @@
     calls: renderCalls,
     billing: renderBilling,
     updates: renderUpdates,
+    bulk: renderBulk,
     settings: renderSettings
   };
 })(window);
